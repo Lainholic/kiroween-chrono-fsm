@@ -6,9 +6,11 @@
 graph TD
     Engine[src/core/fsm-engine.js<br/>FsmEngine Class] -->|State Events & Transitions| ClockApp[App 1: Neon Smart Clock]
     Engine -->|State Events & Transitions| BoxApp[App 2: Spooky Jack-in-the-Box]
+    Engine -->|State Events & Transitions| VendApp[App 3: Haunted Vending Machine]
     
     ClockApp --> UI[index.html UI View]
     BoxApp --> UI
+    VendApp --> UI
     
     Engine <-->|0-Bit URL Hash Base64| HashRouter[window.location.hash]
     UI -->|Web Audio API| Synth[Sound Synthesizer Oscillator]
@@ -104,6 +106,35 @@ const boxSchema = {
 };
 ```
 
+### 2.3 Haunted Vending Machine FSM Schema (guards + weighted outcomes + self transition)
+```typescript
+const vendSchema = {
+  id: "haunted-vending",
+  initialState: "IDLE",
+  context: { coins: 0, slot: null, kicks: 0 },
+  states: {
+    IDLE:      { transitions: [{ event: "COIN", target: "HAS_COIN" }] },
+    HAS_COIN:  {
+      transitions: [
+        { event: "COIN",   target: "HAS_COIN", guard: (c) => c.coins < 3 },
+        { event: "SELECT", target: "DISPENSED", probability: 0.60, guard: (c) => c.coins >= 2 },
+        { event: "SELECT", target: "JAMMED",    probability: 0.25, guard: (c) => c.coins >= 2 },
+        { event: "SELECT", target: "HAUNTED",   probability: 0.15, guard: (c) => c.coins >= 2 },
+        { event: "RESET",  target: "IDLE" }
+      ],
+      timeout: { durationMs: 20000, targetState: "IDLE" }
+    },
+    DISPENSED: { transitions: [{ event: "TAKE", target: "IDLE" }], timeout: { durationMs: 8000, targetState: "IDLE" } },
+    JAMMED:    { transitions: [
+        { event: "KICK", target: "DISPENSED", probability: 0.40 },
+        { event: "KICK", target: "JAMMED",    probability: 0.60 },   // self transition
+        { event: "RESET", target: "IDLE" } ] },
+    HAUNTED:   { transitions: [{ event: "RESET", target: "IDLE" }], timeout: { durationMs: 4500, targetState: "IDLE" } }
+  }
+};
+```
+The marker comments `// <schema:vending>` in `index.html` let the verifier extract this schema and test it against the real engine.
+
 ---
 
 ## 3. UI/UX Interaction & Web Audio Design
@@ -120,6 +151,11 @@ const boxSchema = {
      - `READY_TO_POP`: Pulsing glow, Warning beep (480Hz).
      - `POPPED_TREAT`: Major Triad Chime (C5, E5, G5).
      - `POPPED_TRICK`: Jumpscare low sawtooth screech (110Hz $\rightarrow$ 60Hz drop) + visual screen shake.
-3. **0-Bit URL Hash Integration**:
+3. **Haunted Vending Machine** (`vend-canvas`, 360x360 Canvas 2D):
+   - Neon-trimmed machine with glass window, 3x2 candy / skull / potion shelves, LCD credit display, coin slot with falling coin, A/B/C buttons, dispensing bay.
+   - `DISPENSED`: selected item drops with gravity and bounces in the bay, small candy burst, clunk + chime.
+   - `JAMMED`: item hangs tilted, red lamp blinks, machine shakes on every kick, buzzer and thud.
+   - `HAUNTED`: lights flicker, a phantom face appears in the glass, items rattle and levitate, green wisps and eyes in the bay, low moan.
+4. **0-Bit URL Hash Integration**:
    - Every state transition synchronizes with `window.location.hash`.
    - On page load, if a valid hash exists, state machine instantly restores.

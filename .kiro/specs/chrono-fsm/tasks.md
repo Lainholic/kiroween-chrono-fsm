@@ -39,3 +39,9 @@
   - [x] 8.2 Synchronize `src/core/fsm-engine.ts` with `src/core/fsm-engine.js` (identical runtime logic and API surface; `.js` is the source of truth).
   - [x] 8.3 Organize specs under `.kiro/specs/chrono-fsm/` and fix stale path references.
   - [x] 8.4 Add Web Audio autoplay guard (AudioContext created and resumed on first user gesture).
+- [ ] 9. App 3: Haunted Vending Machine (proves the skeleton generalizes, zero engine changes)
+  - [ ] 9.1 Define `vendSchema` (guard, 60/25/15 branch, kick self transition, timeouts) between `// <schema:vending>` markers in `index.html`.
+  - [ ] 9.2 Add the third tab, controls and live messages; wire `COIN`, `SELECT`, `KICK`, `TAKE`, `RESET` through `engine.send()` with explanatory notices when `send()` returns `false`.
+  - [ ] 9.3 Render the machine on `vend-canvas` (coin, drop physics, jam, haunted effects) inside the unified animation loop, with Web Audio cues.
+  - [ ] 9.4 Support the third app in the node graph (self-transition loop), URL hash (`#app=vend`) and state restore.
+  - [ ] 9.5 Extend `tests/verify_chrono.js` with behavioral tests that extract `vendSchema` and run it on the real engine; confirm `fsm-engine.js` is unchanged.
