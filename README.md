@@ -12,6 +12,15 @@ All three apps import the same file, `src/core/fsm-engine.js`, and differ only i
 
 ---
 
+## Live Screenshots & Kiro Proof
+
+| App 1: Neon Focus Clock Running | Kiro IDE & Automated Hook Verification | Kiro Spec/Hook File Structure |
+| :---: | :---: | :---: |
+| ![Neon Focus Clock](docs/images/app1-neon-clock-running.png) | ![Kiro Hook Verified](docs/images/kiro-hooks-verified.jpg) | ![Kiro Tree](docs/images/kiro-file-tree.png) |
+
+
+---
+
 ## The Skeleton Idea
 
 The track asks for a clean, flexible skeleton that proves its versatility by powering distinct applications. This project makes that literal.
