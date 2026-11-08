@@ -1,0 +1,13 @@
+{
+  "name": "Engine Sync Check",
+  "version": "1.0.0",
+  "description": "When the JS engine is edited, verify the TS twin stays identical and the verifier still passes.",
+  "when": {
+    "type": "fileEdited",
+    "pattern": "src/core/fsm-engine.js"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "src/core/fsm-engine.js was just edited. It is the runtime source of truth. 1) Compare it with src/core/fsm-engine.ts and make the .ts mirror the same runtime logic and public API (types may differ, logic must not). 2) Run `node tests/verify_chrono.js` and report the result. 3) Remind me that the project's headline claim is ZERO engine modifications between the two apps, so flag any change that adds app-specific logic to the engine."
+  }
+}
