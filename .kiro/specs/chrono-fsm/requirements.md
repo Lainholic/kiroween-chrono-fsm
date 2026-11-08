@@ -43,6 +43,6 @@
 - **REQ-VND-06**: The app **SHALL** use the same unmodified `src/core/fsm-engine.js` as Apps 1 and 2. Its state **SHALL** appear in the live node graph and round-trip through the URL hash (`#app=vend`).
 
 ### 2.5 Architecture & Zero-Bit URL Hash Requirements
-- **REQ-SYS-01**: Both apps **SHALL** import and instantiate `FsmEngine` from `./src/core/fsm-engine.js` via an ES module import, sharing zero global mock variables.
+- **REQ-SYS-01**: All three apps **SHALL** import and instantiate `FsmEngine` from `./src/core/fsm-engine.js` via an ES module import, sharing zero global mock variables.
 - **REQ-SYS-02**: The UI **SHALL** reflect the active state machine's state in real-time badges and display live state history.
-- **REQ-SYS-03**: The app **SHALL** support URL hash synchronization (`#app=box&state=READY_TO_POP` or base64 snapshot) to restore session state across page refreshes.
+- **REQ-SYS-03**: The app **SHALL** support URL hash synchronization (`#app=<clock|box|vend>&d=<base64 snapshot>`) to restore session state across page refreshes.

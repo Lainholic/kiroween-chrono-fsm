@@ -3,6 +3,9 @@
 > **Kiroween 2026 · Skeleton Crew Track**
 > A zero-dependency, pure finite state machine engine driving three radically distinct apps with **ZERO engine modifications**.
 
+**Live demo:** https://lainholic.github.io/kiroween-chrono-fsm/  
+**Demo video:** https://youtu.be/vLiqAHuznxU
+
 | App 1: Neon Focus Clock | App 2: Halloween Jack-in-the-Box | App 3: Haunted Vending Machine |
 | --- | --- | --- |
 | Pomodoro-style deep work timer on a neon arc gauge | Crank-and-pop mechanical music box with a 50/50 Treat or Trick | Coin-operated machine with a credit guard and a 60/25/15 Dispense, Jam or Haunt |
