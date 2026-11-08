@@ -349,20 +349,31 @@
       $('clock-start-btn').textContent = btns[state];
     }
 
+    // The countdown follows the real clock (Date.now), not a counter of interval ticks.
+    // Browsers throttle timers in background tabs and pause them during sleep, so counting
+    // ticks would make the timer run slow. Checking the wall clock keeps it exact.
+    let clockEndAt = 0;
     function stopClockTicker() { clearInterval(clockTimer); clockTimer = null; }
+    function clockTick() {
+      if (clockEngine.getCurrentState() !== 'FOCUSING') return;
+      const ctx = clockEngine.getContext();
+      const remaining = Math.max(0, Math.ceil((clockEndAt - Date.now()) / 1000));
+      if (remaining !== ctx.remainingSeconds) {
+        const steps = ctx.remainingSeconds - remaining;
+        ctx.remainingSeconds = remaining;
+        renderClock();
+        if (activeApp === 'clock') syncHash();
+        if (steps === 1 && !document.hidden) playBeep(1000, 'square', 0.03, 0, null, 0.02); // tick
+      }
+      if (remaining <= 0) clockEngine.send('EXPIRE');
+    }
     function startClockTicker() {
       stopClockTicker();
-      clockTimer = setInterval(() => {
-        const ctx = clockEngine.getContext();
-        if (ctx.remainingSeconds > 0) {
-          ctx.remainingSeconds--;
-          renderClock();
-          if (ctx.remainingSeconds % 5 === 0) syncHash();
-          playBeep(1000, 'square', 0.03, 0, null, 0.02); // tick
-        }
-        if (ctx.remainingSeconds <= 0) clockEngine.send('EXPIRE');
-      }, 1000);
+      clockEndAt = Date.now() + clockEngine.getContext().remainingSeconds * 1000;
+      clockTimer = setInterval(clockTick, 250);
     }
+
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) clockTick(); });
 
     function bindClock() {
       clockEngine.onStateChange((state, prev, ctx, event) => {
