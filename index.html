@@ -18,7 +18,8 @@
     header { text-align: center; margin-bottom: 24px; }
     header h1 { color: var(--neon-cyan); font-size: 26px; text-shadow: 0 0 10px rgba(102, 252, 241, 0.5); }
     header p { color: #8892b0; font-size: 13px; margin-top: 6px; }
-    .tabs { display: flex; gap: 12px; margin-bottom: 20px; }
+    .tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 20px; }
+    .btn-row { flex-wrap: wrap; justify-content: center; }
     .tab-btn {
       background: #121820; border: 1px solid #334; color: #889; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.2s;
     }
@@ -65,12 +66,13 @@
 
   <header>
     <h1>CHRONO-FSM</h1>
-    <p>Kiroween 2026: Skeleton Crew Track - One Pure FSM Engine Driving Two Distinct Apps</p>
+    <p>Kiroween 2026: Skeleton Crew Track - One Pure FSM Engine Driving Three Distinct Apps</p>
   </header>
 
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('clock')">App 1: Neon Focus Clock</button>
     <button class="tab-btn" onclick="switchTab('box')">App 2: Spooky Jack-in-the-Box</button>
+    <button class="tab-btn" onclick="switchTab('vend')">App 3: Haunted Vending Machine</button>
   </div>
 
   <!-- App 1: Neon Clock -->
@@ -100,6 +102,24 @@
     </div>
   </div>
 
+  <!-- App 3: Haunted Vending Machine -->
+  <div id="vend-app" class="app-container">
+    <div class="fsm-badge" style="border-color: #b366ff; color: #b366ff;">
+      FSM STATE: <span id="vend-state">IDLE</span>
+    </div>
+    <canvas id="vend-canvas" class="stage" width="360" height="360" role="img" aria-label="Animated haunted vending machine"></canvas>
+    <div class="box-message" id="vend-message" aria-live="polite">Insert 2 coins to pick a treat.</div>
+    <div class="btn-row">
+      <button class="action-btn vend-btn" onclick="vendCoin()">INSERT COIN</button>
+      <button class="action-btn vend-btn" onclick="vendSelect(0)" aria-label="Select slot A">A</button>
+      <button class="action-btn vend-btn" onclick="vendSelect(1)" aria-label="Select slot B">B</button>
+      <button class="action-btn vend-btn" onclick="vendSelect(2)" aria-label="Select slot C">C</button>
+    </div>
+    <div class="btn-row">
+      <button class="action-btn vend-btn" onclick="vendKick()">KICK</button>
+      <button class="action-btn vend-btn" onclick="vendReset()">TAKE / REFUND</button>
+    </div>
+  </div>
   <canvas id="fsm-graph-canvas" class="stage" width="580" height="110" role="img" aria-label="Live FSM node graph"></canvas>
 
   <div class="fsm-status-bar">
@@ -180,6 +200,52 @@
       }
     };
 
+    // ---------- App 3: Haunted Vending Machine schema (see design.md 2.3) ----------
+    // <schema:vending>
+    const VEND_PRICE = 2;
+    const hasCredit = (ctx) => ctx.coins >= VEND_PRICE;
+    const takeSlot = (ctx, payload) => {
+      ctx.coins -= VEND_PRICE;
+      ctx.slot = payload && Number.isInteger(payload.slot) ? payload.slot : 0;
+    };
+    const vendSchema = {
+      id: 'haunted-vending',
+      name: 'Haunted Vending Machine',
+      initialState: 'IDLE',
+      context: { coins: 0, slot: null, kicks: 0 },
+      states: {
+        IDLE: {
+          onEnter: (ctx) => { ctx.coins = 0; ctx.slot = null; ctx.kicks = 0; },
+          transitions: [{ event: 'COIN', target: 'HAS_COIN', action: (ctx) => { ctx.coins = 1; } }]
+        },
+        HAS_COIN: {
+          transitions: [
+            { event: 'COIN', target: 'HAS_COIN', guard: (ctx) => ctx.coins < 3, action: (ctx) => { ctx.coins++; } },
+            { event: 'SELECT', target: 'DISPENSED', probability: 0.60, guard: hasCredit, action: takeSlot },
+            { event: 'SELECT', target: 'JAMMED', probability: 0.25, guard: hasCredit, action: takeSlot },
+            { event: 'SELECT', target: 'HAUNTED', probability: 0.15, guard: hasCredit, action: takeSlot },
+            { event: 'RESET', target: 'IDLE' }
+          ],
+          timeout: { durationMs: 20000, targetState: 'IDLE' }
+        },
+        DISPENSED: {
+          transitions: [{ event: 'TAKE', target: 'IDLE' }],
+          timeout: { durationMs: 8000, targetState: 'IDLE' }
+        },
+        JAMMED: {
+          transitions: [
+            { event: 'KICK', target: 'DISPENSED', probability: 0.40, action: (ctx) => { ctx.kicks++; } },
+            { event: 'KICK', target: 'JAMMED', probability: 0.60, action: (ctx) => { ctx.kicks++; } },
+            { event: 'RESET', target: 'IDLE' }
+          ]
+        },
+        HAUNTED: {
+          transitions: [{ event: 'RESET', target: 'IDLE' }],
+          timeout: { durationMs: 4500, targetState: 'IDLE' }
+        }
+      }
+    };
+    // </schema:vending>
     // ---------- Web Audio ----------
     let audioCtx = null;
     let audioUnlocked = false;
@@ -219,12 +285,13 @@
     // ---------- Engines ----------
     let clockEngine = new FsmEngine(clockSchema);
     let boxEngine = new FsmEngine(boxSchema);
+    let vendEngine = new FsmEngine(vendSchema);
     let activeApp = 'clock';
     let clockTimer = null;
     const $ = (id) => document.getElementById(id);
 
-    function engineFor(app) { return app === 'clock' ? clockEngine : boxEngine; }
-    function schemaFor(app) { return app === 'clock' ? clockSchema : boxSchema; }
+    function engineFor(app) { return { clock: clockEngine, box: boxEngine, vend: vendEngine }[app]; }
+    function schemaFor(app) { return { clock: clockSchema, box: boxSchema, vend: vendSchema }[app]; }
 
     // ---------- 0-Bit URL Hash ----------
     function syncHash() {
@@ -235,7 +302,7 @@
       const params = new URLSearchParams(location.hash.replace(/^#/, '').replace(/\+/g, '%2B'));
       const app = params.get('app');
       const data = params.get('d');
-      return { app: (app === 'clock' || app === 'box') ? app : null, data };
+      return { app: ['clock', 'box', 'vend'].includes(app) ? app : null, data };
     }
     function restoreFromHash() {
       const { app, data } = parseHash();
@@ -244,7 +311,8 @@
       if (data) {
         const restored = FsmEngine.fromHashString(schemaFor(app), data);
         if (app === 'clock') { clockEngine.destroy(); clockEngine = restored; }
-        else { boxEngine.destroy(); boxEngine = restored; }
+        else if (app === 'box') { boxEngine.destroy(); boxEngine = restored; }
+        else { vendEngine.destroy(); vendEngine = restored; }
       }
     }
 
@@ -259,7 +327,7 @@
       const tabs = document.querySelectorAll('.tab-btn');
       document.querySelectorAll('.app-container').forEach(c => c.classList.remove('active'));
       tabs.forEach(b => b.classList.remove('active'));
-      tabs[target === 'clock' ? 0 : 1].classList.add('active');
+      tabs[{ clock: 0, box: 1, vend: 2 }[target]].classList.add('active');
       $(target + '-app').classList.add('active');
     }
     function switchTab(target) {
@@ -373,14 +441,74 @@
     }
     function resetBox() { boxEngine.send('RESET'); }
 
+    // ---------- App 3: Vending machine UI ----------
+    function renderVend() {
+      const state = vendEngine.getCurrentState();
+      const c = vendEngine.getContext();
+      $('vend-state').textContent = state;
+      const msgs = {
+        IDLE: `Insert ${VEND_PRICE} coins to pick a treat.`,
+        HAS_COIN: c.coins < VEND_PRICE
+          ? `Credit ${c.coins}/${VEND_PRICE}. Insert ${VEND_PRICE - c.coins} more.`
+          : `Credit ${c.coins}. Pick A, B or C and hope for the best...`,
+        DISPENSED: 'Clunk! Your treat dropped into the bay.',
+        JAMMED: 'JAMMED! Kick it: 40% chance to shake it loose.',
+        HAUNTED: 'The machine is HAUNTED. Something is watching you...'
+      };
+      $('vend-message').textContent = msgs[state];
+    }
+    function vendNotice(text) { $('vend-message').textContent = text; }
+
+    function vendCoin() {
+      if (!vendEngine.send('COIN')) {
+        vendNotice(vendEngine.getCurrentState() === 'HAS_COIN' ? 'Coin slot full (max 3).' : 'The machine is not accepting coins right now.');
+      }
+    }
+    function vendSelect(slot) {
+      // The engine guard rejects SELECT without enough credit and send() returns false.
+      if (!vendEngine.send('SELECT', { slot })) {
+        vendNotice(vendEngine.getContext().coins >= VEND_PRICE ? 'Nothing to select right now.' : `Not enough credit: ${VEND_PRICE} coins needed.`);
+      }
+    }
+    function vendKick() {
+      if (!vendEngine.send('KICK')) vendNotice('Kicking does nothing right now. Save your toes.');
+    }
+    function vendReset() {
+      if (!vendEngine.send('TAKE') && !vendEngine.send('RESET')) vendNotice('Nothing to reset.');
+    }
+
+    function bindVend() {
+      vendEngine.onStateChange((state, prev, ctx, event) => {
+        renderVend();
+        if (prev && event !== 'RESTORED_FROM_HASH') {
+          pushPacket('vend', prev, state, event);
+          onVendState(state, prev, event);
+          if (event === 'COIN') { playBeep(1319, 'triangle', 0.08); playBeep(1760, 'triangle', 0.14, 0.07); }
+          else if (event === 'SELECT') playBeep(180, 'square', 0.08);
+          if (state === 'DISPENSED') {
+            playBeep(120, 'sawtooth', 0.18, 0.15, 60);
+            playBeep(523.25, 'triangle', 0.2, 0.4);
+            playBeep(659.25, 'triangle', 0.2, 0.52);
+            playBeep(783.99, 'triangle', 0.4, 0.64);
+          } else if (state === 'JAMMED') {
+            playBeep(150, 'sawtooth', 0.5, 0.1, 70, 0.15);
+            if (event === 'KICK') playBeep(90, 'square', 0.12, 0, 50, 0.2);
+          } else if (state === 'HAUNTED') {
+            playBeep(90, 'sine', 1.4, 0.1, 50, 0.22);
+            playBeep(740, 'triangle', 0.9, 0.3, 520, 0.05);
+          } else if (state === 'IDLE') playBeep(260, 'sine', 0.12);
+        }
+        if (activeApp === 'vend') { syncHash(); renderHistory(); }
+      });
+    }
     // Expose handlers for inline onclick attributes (module scope is private)
-    Object.assign(window, { switchTab, clockToggle, clockReset, crankBox, resetBox });
+    Object.assign(window, { switchTab, clockToggle, clockReset, crankBox, resetBox, vendCoin, vendSelect, vendKick, vendReset });
 
     // ================= Canvas 2D Visual Engines (unified 60 FPS loop) =================
     const TAU = Math.PI * 2;
     const rand = (a, b) => a + Math.random() * (b - a);
     const lerp = (a, b, k) => a + (b - a) * k;
-    let clockView, boxView, graphView;
+    let clockView, boxView, vendView, graphView;
 
     function setupCanvas(id) {
       const c = $(id);
@@ -454,7 +582,7 @@
           g.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
         } else if (p.kind === 'puff') {
           const r = p.size + (1 - p.life / p.max) * 22;
-          g.fillStyle = 'rgba(190,150,230,0.35)';
+          g.fillStyle = p.color || 'rgba(190,150,230,0.35)';
           g.beginPath(); g.arc(p.x, p.y, r, 0, TAU); g.fill();
         } else { // spark / ember
           g.globalCompositeOperation = 'lighter';
@@ -777,6 +905,246 @@
       }
     }
 
+    // ---------- App 3: Haunted Vending Machine renderer ----------
+    const ITEM_COLS = [86, 146, 206];
+    const ITEM_ROWS = [100, 185];
+    const BAY_Y = 294;
+    const vendVis = { shake: 0, coin: 0, ghost: 0, restock: 0, jamTilt: 0, flick: 1, wisp: 0, spark: 0, drop: null };
+
+    function rr(g, x, y, w, h, r) {
+      g.beginPath();
+      g.moveTo(x + r, y);
+      g.arcTo(x + w, y, x + w, y + h, r);
+      g.arcTo(x + w, y + h, x, y + h, r);
+      g.arcTo(x, y + h, x, y, r);
+      g.arcTo(x, y, x + w, y, r);
+      g.closePath();
+    }
+
+    function drawVendItem(g, kind, x, y, s, t, rot) {
+      g.save();
+      g.translate(x, y); g.rotate(rot || 0); g.scale(s, s);
+      if (kind === 0) { // candy corn
+        g.beginPath(); g.moveTo(0, -18); g.lineTo(-14, 16); g.lineTo(14, 16); g.closePath();
+        g.save(); g.clip();
+        g.fillStyle = '#ffd23f'; g.fillRect(-16, 3, 32, 16);
+        g.fillStyle = '#ff8c1e'; g.fillRect(-16, -8, 32, 11);
+        g.fillStyle = '#ffffff'; g.fillRect(-16, -20, 32, 12);
+        g.restore();
+        g.strokeStyle = 'rgba(0,0,0,0.5)'; g.lineWidth = 1.5; g.stroke();
+      } else if (kind === 1) { // skull candy
+        g.fillStyle = '#f4f1e8';
+        g.beginPath(); g.arc(0, -3, 14, 0, TAU); g.fill();
+        rr(g, -8, 6, 16, 10, 3); g.fill();
+        g.fillStyle = '#1a0f22';
+        g.beginPath(); g.ellipse(-5.5, -4, 3.6, 4.6, 0, 0, TAU); g.fill();
+        g.beginPath(); g.ellipse(5.5, -4, 3.6, 4.6, 0, 0, TAU); g.fill();
+        g.beginPath(); g.moveTo(0, 1); g.lineTo(-2, 5); g.lineTo(2, 5); g.closePath(); g.fill();
+        g.strokeStyle = '#1a0f22'; g.lineWidth = 1;
+        for (const k of [-3, 0, 3]) { g.beginPath(); g.moveTo(k, 8); g.lineTo(k, 15); g.stroke(); }
+      } else { // glowing potion
+        g.shadowColor = '#55ff99'; g.shadowBlur = 10;
+        g.fillStyle = '#2fd884';
+        g.beginPath(); g.arc(0, 6, 13, 0, TAU); g.fill();
+        g.shadowBlur = 0;
+        g.fillStyle = '#9cf5c8'; g.fillRect(-4, -14, 8, 12);
+        g.fillStyle = '#8b5a2b'; g.fillRect(-5, -19, 10, 6);
+        g.fillStyle = `rgba(255,255,255,${0.35 + 0.25 * Math.sin(t * 3)})`;
+        g.beginPath(); g.arc(-4, 2, 3.5, 0, TAU); g.fill();
+      }
+      g.restore();
+    }
+
+    function snapVendVisuals() {
+      const s = vendEngine.getCurrentState(), v = vendVis;
+      v.ghost = s === 'HAUNTED' ? 1 : 0;
+      v.jamTilt = s === 'JAMMED' ? 0.5 : 0;
+      const slot = vendEngine.getContext().slot;
+      v.drop = s === 'DISPENSED' && Number.isInteger(slot)
+        ? { kind: slot, x: ITEM_COLS[slot], y: BAY_Y, vy: 0, rot: 0.3, vr: 0, landed: true } : null;
+    }
+    function burstTray(slot) {
+      const x = ITEM_COLS[Number.isInteger(slot) ? slot : 1];
+      for (let i = 0; i < 30; i++) {
+        const a = rand(-Math.PI * 0.9, -Math.PI * 0.1), sp = rand(120, 300);
+        spawn({ kind: 'confetti', x, y: BAY_Y - 6, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 520, rot: rand(0, TAU), vr: rand(-12, 12), life: rand(0.9, 1.7), size: rand(4, 8), color: CANDY[i % CANDY.length] });
+      }
+      for (let i = 0; i < 12; i++) {
+        const a = rand(0, TAU), sp = rand(60, 220);
+        spawn({ kind: 'spark', x, y: BAY_Y - 6, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 60, g: 300, rot: 0, vr: 0, life: rand(0.4, 0.9), size: rand(1.5, 3), color: '#ffd966' });
+      }
+    }
+    function jamSparks(slot) {
+      const x = ITEM_COLS[Number.isInteger(slot) ? slot : 1];
+      for (let i = 0; i < 14; i++) {
+        const a = rand(0, TAU), sp = rand(60, 220);
+        spawn({ kind: 'spark', x, y: ITEM_ROWS[1] + 14, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 400, rot: 0, vr: 0, life: rand(0.3, 0.7), size: rand(1.5, 3), color: i % 2 ? '#ff3355' : '#ffb347' });
+      }
+    }
+    function onVendState(state, prev, event) {
+      const v = vendVis, slot = vendEngine.getContext().slot;
+      if (event === 'COIN') v.coin = 1;
+      if (event === 'SELECT') v.shake = Math.max(v.shake, 0.4);
+      if (event === 'KICK') v.shake = 1;
+      if (state === 'DISPENSED') {
+        const fromJam = prev === 'JAMMED';
+        v.drop = { kind: Number.isInteger(slot) ? slot : 1, x: ITEM_COLS[Number.isInteger(slot) ? slot : 1], y: ITEM_ROWS[1] + (fromJam ? 14 : 0), vy: 0, rot: fromJam ? 0.5 : 0, vr: rand(-2, 2), landed: false };
+        v.jamTilt = 0;
+        v.shake = Math.max(v.shake, 0.5);
+      } else if (state === 'JAMMED') {
+        v.shake = Math.max(v.shake, 0.8);
+        jamSparks(slot);
+      } else if (state === 'HAUNTED') {
+        v.shake = Math.max(v.shake, 0.6);
+      } else if (state === 'IDLE' && prev && prev !== 'IDLE') {
+        v.restock = 1; v.drop = null;
+      }
+    }
+    function updateVendVis(dt) {
+      const v = vendVis, s = vendEngine.getCurrentState();
+      v.shake = Math.max(0, v.shake - dt * 1.6);
+      v.coin = Math.max(0, v.coin - dt * 2.2);
+      v.restock = Math.max(0, v.restock - dt * 1.4);
+      v.ghost = lerp(v.ghost, s === 'HAUNTED' ? 1 : 0, 1 - Math.exp(-5 * dt));
+      v.jamTilt = lerp(v.jamTilt, s === 'JAMMED' ? 0.5 : 0, 1 - Math.exp(-8 * dt));
+      v.flick = s === 'HAUNTED' ? (Math.random() < 0.25 ? 0.25 : 1) : 1;
+      if (v.drop && !v.drop.landed) {
+        const d = v.drop;
+        d.vy += 1100 * dt; d.y += d.vy * dt; d.rot += d.vr * dt;
+        if (d.y >= BAY_Y) {
+          d.y = BAY_Y;
+          if (Math.abs(d.vy) > 160) { d.vy = -d.vy * 0.35; d.vr *= 0.5; } else { d.vy = 0; d.landed = true; d.rot = 0.3; }
+          if (d.vy === 0 && !d.burst) { d.burst = true; burstTray(d.kind); }
+        }
+      }
+      if (s === 'HAUNTED') { // toxic wisps rising from the bay
+        v.wisp += 14 * dt;
+        while (v.wisp >= 1) {
+          v.wisp -= 1;
+          spawn({ kind: 'puff', x: rand(70, 220), y: rand(270, 320), vx: rand(-15, 15), vy: rand(-90, -50), g: -10, rot: 0, vr: 0, life: rand(0.8, 1.4), size: rand(4, 8), color: 'rgba(125,255,58,0.30)' });
+        }
+      }
+      if (s === 'JAMMED') { // occasional sparks from the stuck item
+        v.spark += 3 * dt;
+        while (v.spark >= 1) { v.spark -= 1; spawn({ kind: 'spark', x: ITEM_COLS[vendEngine.getContext().slot ?? 1], y: ITEM_ROWS[1] + 14, vx: rand(-60, 60), vy: rand(-80, -10), g: 400, rot: 0, vr: 0, life: rand(0.2, 0.5), size: rand(1.2, 2.2), color: '#ff3355' }); }
+      }
+    }
+
+    function drawVend(t) {
+      const g = vendView.g, v = vendVis;
+      begin(vendView);
+      const s = vendEngine.getCurrentState(), c = vendEngine.getContext();
+      const neon = { IDLE: '#b366ff', HAS_COIN: '#ffbf3f', DISPENSED: '#55ff99', JAMMED: '#ff3355', HAUNTED: '#7dff3a' }[s];
+
+      const bg = g.createRadialGradient(180, 180, 20, 180, 180, 270);
+      bg.addColorStop(0, '#1b1426'); bg.addColorStop(1, '#0b0c10');
+      g.fillStyle = bg; g.fillRect(0, 0, 360, 360);
+
+      const amp = v.shake * 8 + (s === 'HAUNTED' ? 2 : 0);
+      g.save();
+      g.translate((Math.random() * 2 - 1) * amp, (Math.random() * 2 - 1) * amp * 0.5);
+
+      // cabinet
+      const body = g.createLinearGradient(40, 10, 320, 350);
+      body.addColorStop(0, '#3a2a5e'); body.addColorStop(1, '#1b1233');
+      rr(g, 40, 10, 280, 340, 14); g.fillStyle = body; g.fill();
+      g.save();
+      g.globalAlpha = v.flick; g.strokeStyle = neon; g.shadowColor = neon; g.shadowBlur = 14; g.lineWidth = 3;
+      rr(g, 40, 10, 280, 340, 14); g.stroke();
+      g.font = 'bold 14px Consolas, "Courier New", monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillStyle = neon; g.fillText(s === 'HAUNTED' ? 'SP00KY SN4CKS' : 'SPOOKY SNACKS', 146, 29);
+      g.restore();
+
+      // glass window with shelves, items, ghost
+      g.save();
+      rr(g, 56, 46, 180, 204, 8); g.fillStyle = '#0d0a18'; g.fill(); g.clip();
+      const glow = g.createLinearGradient(0, 46, 0, 250);
+      glow.addColorStop(0, s === 'HAUNTED' ? `rgba(125,255,58,${0.16 * v.flick})` : 'rgba(255,230,160,0.14)');
+      glow.addColorStop(1, 'rgba(255,230,160,0)');
+      g.fillStyle = glow; g.fillRect(56, 46, 180, 204);
+      g.fillStyle = 'rgba(180,150,230,0.35)';
+      g.fillRect(60, 128, 172, 3); g.fillRect(60, 213, 172, 3);
+      const slotTaken = c.slot;
+      const itemScale = 1 - v.restock * 0.8;
+      for (let row = 0; row < 2; row++) {
+        for (let col = 0; col < 3; col++) {
+          const taken = row === 1 && col === slotTaken && (s === 'DISPENSED' || s === 'JAMMED' || s === 'HAUNTED');
+          if (taken && s !== 'JAMMED') continue;
+          let x = ITEM_COLS[col], y = ITEM_ROWS[row], rot = 0;
+          if (taken && s === 'JAMMED') { y += 14; rot = v.jamTilt; } // stuck, tilted item
+          if (s === 'HAUNTED') {
+            const i = row * 3 + col;
+            x += Math.sin(t * 40 + i) * 1.8; y -= Math.abs(Math.sin(t * 3 + i)) * 7; rot = Math.sin(t * 30 + i) * 0.1;
+          }
+          drawVendItem(g, col, x, y, itemScale, t, rot);
+        }
+      }
+      if (v.ghost > 0.02) {
+        g.save(); g.globalAlpha = v.ghost * 0.8 * v.flick;
+        drawPhantom(g, 146, 150, 1.7, t);
+        g.restore();
+      }
+      g.fillStyle = 'rgba(255,255,255,0.06)'; // glass glare
+      g.beginPath(); g.moveTo(56, 46); g.lineTo(120, 46); g.lineTo(56, 130); g.closePath(); g.fill();
+      g.restore();
+
+      // control panel
+      rr(g, 250, 46, 58, 204, 8); g.fillStyle = '#120d22'; g.fill();
+      g.strokeStyle = 'rgba(179,102,255,0.4)'; g.lineWidth = 1.5; g.stroke();
+      rr(g, 256, 52, 46, 26, 3); g.fillStyle = '#0a1a10'; g.fill();
+      const lcd = { IDLE: 'INSERT', HAS_COIN: `CR ${c.coins}`, DISPENSED: 'ENJOY', JAMMED: Math.sin(t * 8) > 0 ? 'ERR 42' : '', HAUNTED: ['BOO', 'B00', '8OO'][Math.floor(t * 12) % 3] }[s];
+      g.font = 'bold 11px Consolas, monospace'; g.fillStyle = '#55ff99'; g.shadowColor = '#55ff99'; g.shadowBlur = 6;
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(lcd, 279, 66); g.shadowBlur = 0;
+      const slotGlow = (s === 'IDLE' || s === 'HAS_COIN') ? 0.5 + 0.5 * Math.sin(t * 5) : 0;
+      rr(g, 268, 94, 22, 8, 2); g.fillStyle = '#000'; g.fill();
+      if (slotGlow) { g.save(); g.strokeStyle = '#ffbf3f'; g.shadowColor = '#ffbf3f'; g.shadowBlur = 10 * slotGlow; g.lineWidth = 1.5; rr(g, 268, 94, 22, 8, 2); g.stroke(); g.restore(); }
+      g.font = '8px Consolas, monospace'; g.fillStyle = '#8892b0'; g.fillText('COIN', 279, 112);
+      if (v.coin > 0) { // coin sliding into the slot
+        g.save(); g.globalAlpha = Math.min(1, v.coin * 1.5);
+        g.fillStyle = '#ffd23f'; g.shadowColor = '#ffd23f'; g.shadowBlur = 8;
+        g.beginPath(); g.ellipse(279, 82 + (1 - v.coin) * 16, 7 * Math.abs(Math.cos(t * 20)) + 1, 8, 0, 0, TAU); g.fill();
+        g.restore();
+      }
+      ['A', 'B', 'C'].forEach((label, i) => {
+        const by = 135 + i * 30, pressed = c.slot === i && (s === 'DISPENSED' || s === 'JAMMED' || s === 'HAUNTED');
+        g.save();
+        if (pressed) { g.shadowColor = neon; g.shadowBlur = 14; }
+        g.fillStyle = pressed ? neon : '#2a2145'; g.strokeStyle = 'rgba(179,102,255,0.6)'; g.lineWidth = 1.5;
+        g.beginPath(); g.arc(279, by, 10, 0, TAU); g.fill(); g.stroke();
+        g.restore();
+        g.font = 'bold 11px Consolas, monospace'; g.fillStyle = pressed ? '#0b0c10' : '#c5c6c7'; g.fillText(label, 279, by + 1);
+      });
+      for (let i = 0; i < 3; i++) { // credit LEDs
+        const lit = (s === 'HAS_COIN') && i < c.coins;
+        g.fillStyle = lit ? '#ffbf3f' : '#2a2145';
+        if (lit) { g.shadowColor = '#ffbf3f'; g.shadowBlur = 8; }
+        g.beginPath(); g.arc(262 + i * 17, 226, 4, 0, TAU); g.fill(); g.shadowBlur = 0;
+      }
+      const lamp = s === 'JAMMED' && Math.sin(t * 9) > 0;
+      g.fillStyle = lamp ? '#ff3355' : '#3a1020';
+      if (lamp) { g.shadowColor = '#ff3355'; g.shadowBlur = 14; }
+      g.beginPath(); g.arc(279, 240, 4.5, 0, TAU); g.fill(); g.shadowBlur = 0;
+
+      // dispensing bay
+      rr(g, 56, 264, 180, 62, 8); g.fillStyle = '#07050d'; g.fill();
+      g.strokeStyle = 'rgba(179,102,255,0.4)'; g.lineWidth = 1.5; g.stroke();
+      g.font = '9px Consolas, monospace'; g.fillStyle = '#8892b0'; g.fillText('TAKE ITEM', 146, 338);
+      if (v.ghost > 0.05 && Math.sin(t * 3) > -0.8) { // eyes watching from the bay
+        g.save(); g.globalAlpha = v.ghost; g.fillStyle = '#7dff3a'; g.shadowColor = '#7dff3a'; g.shadowBlur = 10;
+        g.beginPath(); g.ellipse(124, 296, 4, 6, 0, 0, TAU); g.fill();
+        g.beginPath(); g.ellipse(168, 296, 4, 6, 0, 0, TAU); g.fill();
+        g.restore();
+      }
+      if (v.drop) drawVendItem(g, v.drop.kind, v.drop.x, v.drop.y, 1.1, t, v.drop.rot);
+
+      g.restore(); // end cabinet shake
+      drawParticles(g);
+      if (s === 'HAUNTED') {
+        const vg = g.createRadialGradient(180, 180, 80, 180, 180, 260);
+        vg.addColorStop(0, 'rgba(125,255,58,0)'); vg.addColorStop(1, `rgba(60,200,40,${0.22 * v.flick})`);
+        g.fillStyle = vg; g.fillRect(0, 0, 360, 360);
+      }
+    }
     // ---------- FSM Node Graph Visualizer ----------
     const packets = [];
     function pushPacket(app, from, to, event) {
@@ -793,6 +1161,9 @@
     const NODE_R = 14;
     function edgeGeom(layout, from, to) {
       const a = layout.pos[from], b = layout.pos[to];
+      if (from === to) { // self transition: small loop above the node
+        return { p0: { x: a.x - 8, y: a.y - NODE_R * 0.9 }, p2: { x: a.x + 8, y: a.y - NODE_R * 0.9 }, c: { x: a.x, y: a.y - NODE_R - 34 } };
+      }
       const dist = Math.abs(b.i - a.i);
       const off = Math.min(48, 12 + (dist - 1) * 16) * (b.i > a.i ? -1 : 1); // forward arcs above, back arcs below
       return { p0: a, p2: b, c: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 + off } };
@@ -825,7 +1196,7 @@
       begin(graphView);
       const app = activeApp;
       const layout = graphLayout(app);
-      const accent = app === 'clock' ? '102,252,241' : '255,119,0';
+      const accent = { clock: '102,252,241', box: '255,119,0', vend: '179,102,255' }[app];
       const current = engineFor(app).getCurrentState();
 
       g.fillStyle = '#080a0e'; g.fillRect(0, 0, 580, 110);
@@ -839,8 +1210,8 @@
         if (soft) g.setLineDash([4, 4]);
         g.beginPath(); g.moveTo(geo.p0.x, geo.p0.y); g.quadraticCurveTo(geo.c.x, geo.c.y, geo.p2.x, geo.p2.y); g.stroke();
         g.setLineDash([]);
-        let u = 1; // arrow stops at node boundary
-        while (u > 0.5 && Math.hypot(bezier(geo, u).x - geo.p2.x, bezier(geo, u).y - geo.p2.y) < NODE_R + 3) u -= 0.01;
+        let u = e.from === e.to ? 0.96 : 1; // arrow stops at node boundary
+        while (e.from !== e.to && u > 0.5 && Math.hypot(bezier(geo, u).x - geo.p2.x, bezier(geo, u).y - geo.p2.y) < NODE_R + 3) u -= 0.01;
         const tip = bezier(geo, u), prev = bezier(geo, u - 0.03), ang = Math.atan2(tip.y - prev.y, tip.x - prev.x);
         g.fillStyle = `rgba(${accent},${soft ? 0.4 : 0.8})`;
         g.translate(tip.x, tip.y); g.rotate(ang);
@@ -904,7 +1275,8 @@
       lastT = t;
       updateClockVis(dt);
       updateBoxVis(dt);
-      if (activeApp === 'clock') drawClock(t); else drawBox(t);
+      updateVendVis(dt);
+      ({ clock: drawClock, box: drawBox, vend: drawVend })[activeApp](t);
       drawGraph(t);
       fpsFrames++;
       if (t - fpsStamp >= 0.5) {
@@ -916,17 +1288,21 @@
     function initVisuals() {
       clockView = setupCanvas('clock-canvas');
       boxView = setupCanvas('box-canvas');
+      vendView = setupCanvas('vend-canvas');
       graphView = setupCanvas('fsm-graph-canvas');
       clockVis.p = clockEngine.getCurrentState() === 'BREAK' ? 1 : clockEngine.getContext().remainingSeconds / CLOCK_TOTAL;
       snapBoxVisuals();
+      snapVendVisuals();
       requestAnimationFrame(frame);
     }
     // ---------- Boot ----------
     restoreFromHash();
     bindClock();
     bindBox();
+    bindVend();
     renderClock();
     renderBox();
+    renderVend();
     initVisuals();
     if (clockEngine.getCurrentState() === 'FOCUSING') startClockTicker();
     showTab(activeApp);
