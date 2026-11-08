@@ -124,6 +124,67 @@ if (fs.existsSync(appHtmlPath)) {
       failed++;
     }
   }
+
+  // App 3: Haunted Vending Machine (Task 9): static + behavioral checks on the real engine
+  console.log('\n?? Checking App 3: Haunted Vending Machine...');
+  const checkVend = (name, ok) => {
+    if (ok) console.log(`  ? PASS: ${name}`);
+    else { console.log(`  ? FAIL: ${name}`); failed++; }
+  };
+  checkVend('App 3 container and canvas (vend-app, vend-canvas)', html.includes('id="vend-app"') && html.includes('id="vend-canvas"'));
+  checkVend('Vending FSM States (HAS_COIN, DISPENSED, JAMMED, HAUNTED)', ['HAS_COIN', 'DISPENSED', 'JAMMED', 'HAUNTED'].every((s) => html.includes(s)));
+  checkVend('Third engine instance (new FsmEngine(vendSchema))', html.includes('new FsmEngine(vendSchema)'));
+  checkVend('Engine stays app-agnostic (no clock/box/vending/canvas/audio code in fsm-engine.js)',
+    !/vend|clock|canvas|AudioContext|jack/i.test(fs.readFileSync(enginePath, 'utf8')));
+  try {
+    const m = html.match(/\/\/ <schema:vending>([\s\S]*?)\/\/ <\/schema:vending>/);
+    if (!m) throw new Error('schema markers not found in index.html');
+    const { FsmEngine: Engine } = require(enginePath);
+    const vendSchema = new Function(m[1] + '\nreturn vendSchema;')();
+    const fresh = () => new Engine(vendSchema);
+
+    const e0 = fresh();
+    checkVend('Guard: SELECT is rejected with 0 coins (send() returns false)', e0.send('SELECT', { slot: 0 }) === false && e0.getCurrentState() === 'IDLE');
+    e0.send('COIN');
+    checkVend('Guard: SELECT is rejected with 1 coin', e0.send('SELECT', { slot: 0 }) === false && e0.getCurrentState() === 'HAS_COIN');
+    e0.send('COIN'); e0.send('COIN');
+    checkVend('Guard: coin slot caps at 3 coins', e0.send('COIN') === false && e0.getContext().coins === 3);
+
+    const counts = { DISPENSED: 0, JAMMED: 0, HAUNTED: 0 };
+    const TRIALS = 600;
+    for (let i = 0; i < TRIALS; i++) {
+      const e = fresh(); e.send('COIN'); e.send('COIN'); e.send('SELECT', { slot: i % 3 });
+      counts[e.getCurrentState()]++;
+      e.destroy();
+    }
+    const near = (n, p) => Math.abs(n / TRIALS - p) < 0.08;
+    checkVend(`Weighted branch 60/25/15 (Dispensed ${counts.DISPENSED}, Jammed ${counts.JAMMED}, Haunted ${counts.HAUNTED} of ${TRIALS})`,
+      near(counts.DISPENSED, 0.60) && near(counts.JAMMED, 0.25) && near(counts.HAUNTED, 0.15));
+
+    let freed = 0, jams = 0;
+    for (let i = 0; i < 200 && jams < 40; i++) {
+      const e = fresh(); e.send('COIN'); e.send('COIN'); e.send('SELECT', { slot: 1 });
+      if (e.getCurrentState() !== 'JAMMED') { e.destroy(); continue; }
+      jams++;
+      for (let k = 0; k < 200 && e.getCurrentState() === 'JAMMED'; k++) e.send('KICK');
+      if (e.getCurrentState() === 'DISPENSED') freed++;
+      e.destroy();
+    }
+    checkVend(`Self transition: a jammed machine always frees eventually by kicking (${freed}/${jams})`, jams > 0 && freed === jams);
+
+    checkVend('Timeouts configured: HAS_COIN, DISPENSED, HAUNTED return to IDLE',
+      ['HAS_COIN', 'DISPENSED', 'HAUNTED'].every((s) => vendSchema.states[s].timeout && vendSchema.states[s].timeout.targetState === 'IDLE'));
+
+    let j = fresh(); let g = 0;
+    while (j.getCurrentState() !== 'JAMMED' && g++ < 500) {
+      j.destroy(); j = fresh(); j.send('COIN'); j.send('COIN'); j.send('SELECT', { slot: 2 });
+    }
+    const back = Engine.fromHashString(vendSchema, j.toHashString());
+    checkVend('Vending state + context survive the URL hash round trip', back.getCurrentState() === 'JAMMED' && back.getContext().slot === 2);
+  } catch (e) {
+    console.error('  ? FAIL: Vending behavioral tests crashed:', e.message);
+    failed++;
+  }
 }
 
 if (failed > 0) {
