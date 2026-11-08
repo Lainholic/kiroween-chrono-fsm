@@ -1,20 +1,20 @@
-# Chrono-FSM: One Core, Two Apps
+# Chrono-FSM: One Core, Three Apps
 
 > **Kiroween 2026 · Skeleton Crew Track**
-> A zero-dependency, pure finite state machine engine driving two radically distinct apps with **ZERO engine modifications**.
+> A zero-dependency, pure finite state machine engine driving three radically distinct apps with **ZERO engine modifications**.
 
-| App 1: Neon Focus Clock | App 2: Halloween Jack-in-the-Box |
-| --- | --- |
-| Pomodoro-style deep work timer on a neon arc gauge | Crank-and-pop mechanical music box with a 50/50 Treat or Trick |
-| `IDLE → FOCUSING ⇄ PAUSED`, then `BREAK` | `IDLE → WINDING_1 → WINDING_2 → READY_TO_POP → POPPED_TREAT / POPPED_TRICK` |
+| App 1: Neon Focus Clock | App 2: Halloween Jack-in-the-Box | App 3: Haunted Vending Machine |
+| --- | --- | --- |
+| Pomodoro-style deep work timer on a neon arc gauge | Crank-and-pop mechanical music box with a 50/50 Treat or Trick | Coin-operated machine with a credit guard and a 60/25/15 Dispense, Jam or Haunt |
+| `IDLE → FOCUSING ⇄ PAUSED`, then `BREAK` | `IDLE → WINDING_1 → WINDING_2 → READY_TO_POP → POPPED_TREAT / POPPED_TRICK` | `IDLE → HAS_COIN → DISPENSED / JAMMED / HAUNTED` |
 
-Both apps import the same file, `src/core/fsm-engine.js`, and differ only in the **schema** (a plain object) they hand to it. Everything you see on screen, including the node graph, is driven by that one engine.
+All three apps import the same file, `src/core/fsm-engine.js`, and differ only in the **schema** (a plain object) they hand to it. The vending machine was added last as the stress test: a third app with new needs (guards, a self transition, three weighted outcomes) and **no change to the engine**. `git diff` on `src/core/` since the first commit is empty. Everything you see on screen, including the node graph, is driven by that one engine.
 
 ---
 
 ## The Skeleton Idea
 
-The track asks for a clean, flexible skeleton that proves its versatility by powering two distinct applications. This project makes that literal.
+The track asks for a clean, flexible skeleton that proves its versatility by powering distinct applications. This project makes that literal.
 
 ```
                  +--------------------------------+
@@ -23,14 +23,17 @@ The track asks for a clean, flexible skeleton that proves its versatility by pow
                  |   probability, timeouts,       |
                  |   hash snapshots               |
                  +----------------+---------------+
-                       schema A   |   schema B
-              +-------------------+-------------------+
-              v                                       v
-      Neon Focus Clock                         Jack-in-the-Box
-  (timer, chime, arc gauge)             (tension, 50/50 pop, particles)
+                                  |
+                    schema A / schema B / schema C
+                                  |
+         +------------------------+------------------------+
+         v                        v                        v
+   Neon Focus Clock        Jack-in-the-Box       Haunted Vending Machine
+   (timer, chime,          (tension, 50/50       (credit guard, 60/25/15,
+    arc gauge)              pop, particles)       jam + kick, ghosts)
 ```
 
-The engine knows nothing about clocks, boxes, canvases or audio. Everything app-specific lives in a schema and in the UI code that listens to `onStateChange`.
+The engine knows nothing about clocks, boxes, vending machines, canvases or audio. Everything app-specific lives in a schema and in the UI code that listens to `onStateChange`.
 
 ### What the engine provides
 
@@ -76,11 +79,21 @@ A procedurally drawn mechanical music box. No image assets.
 - **Trick:** a phantom lunges at the camera with red lightning, glitch slices, embers, a low screech and a screen shake.
 - Winding states time out back to `IDLE` after 15 seconds.
 
+## App 3: Haunted Vending Machine
+
+A neon-trimmed vending machine on its own 360×360 canvas, built to exercise engine features the first two apps barely touch.
+
+- **Guard:** `SELECT` is only accepted with 2 coins of credit. Without it the engine's `send()` returns `false` and the UI explains why. The coin slot also caps at 3 coins.
+- **Weighted outcome:** a purchase becomes `DISPENSED` (60%), `JAMMED` (25%) or `HAUNTED` (15%).
+- **Self transition:** kicking a `JAMMED` machine frees the item 40% of the time and otherwise loops back to `JAMMED`. The graph draws that loop.
+- **Timeouts:** unused credit expires after 20 s, a delivered item after 8 s, and the haunting ends after 4.5 s.
+- **Look and sound:** a coin slides into the slot, the chosen item drops with gravity and bounces in the bay with a candy burst, a jam hangs the item tilted with a blinking lamp and sparks, and a haunting flickers the lights, shows a phantom in the glass and rattles the shelves. All sound is synthesized with Web Audio.
+
 ## Live FSM Node Graph
 
-Below both apps, a canvas draws the **active schema** as nodes and edges. The current state has a pulsing neon halo and a rotating ring, and every transition sends an energy packet along its edge labelled with the event. The graph is generated from the same schema objects the engine runs, so it shows the engine at work rather than a mock-up.
+Below the apps, a canvas draws the **active schema** as nodes and edges. The current state has a pulsing neon halo and a rotating ring, and every transition sends an energy packet along its edge labelled with the event. Self transitions are drawn as small loops. The graph is generated from the same schema objects the engine runs, so it shows the engine at work rather than a mock-up.
 
-All three canvases share one `requestAnimationFrame` loop. A small readout under the graph shows live FPS and particle count.
+All four canvases share one `requestAnimationFrame` loop. A small readout under the graph shows live FPS and particle count.
 
 ---
 
@@ -89,10 +102,10 @@ All three canvases share one `requestAnimationFrame` loop. A small readout under
 No backend, no storage, no accounts. The full machine state travels in the URL:
 
 ```
-index.html#app=box&d=<base64 snapshot>
+index.html#app=<clock|box|vend>&d=<base64 snapshot>
 ```
 
-`toHashString()` serializes `{ state, context, timestamp }` to base64. On every transition the page writes it to `location.hash`. On load, `fromHashString()` restores the machine and the page reopens on the right tab. Copy the link mid-crank and the recipient lands on the same tension level. An invalid hash falls back to a fresh machine.
+`toHashString()` serializes `{ state, context, timestamp }` to base64. On every transition the page writes it to `location.hash`. On load, `fromHashString()` restores the machine and the page reopens on the right tab. Copy the link mid-crank, or with a jammed machine, and the recipient lands in the same state. An invalid hash falls back to a fresh machine.
 
 ---
 
@@ -102,12 +115,12 @@ This project uses three Kiro features together.
 
 ### 1. Specs: spec-driven development
 
-Everything started as a spec under [`.kiro/specs/chrono-fsm/`](.kiro/specs/chrono-fsm):
+Everything started as a spec under [`.kiro/specs/chrono-fsm/`](.kiro/specs/chrono-fsm). App 3 followed the same loop: requirements and schema design were written first (`REQ-VND-01` to `REQ-VND-06`), then implemented against Task 9.
 
 | File | Role |
 | --- | --- |
-| [`requirements.md`](.kiro/specs/chrono-fsm/requirements.md) | EARS requirements (`REQ-CORE`, `REQ-CLK`, `REQ-BOX`, `REQ-SYS`) |
-| [`design.md`](.kiro/specs/chrono-fsm/design.md) | Architecture diagram and both FSM schemas |
+| [`requirements.md`](.kiro/specs/chrono-fsm/requirements.md) | EARS requirements (`REQ-CORE`, `REQ-CLK`, `REQ-BOX`, `REQ-VND`, `REQ-SYS`) |
+| [`design.md`](.kiro/specs/chrono-fsm/design.md) | Architecture diagram and the three FSM schemas |
 | [`tasks.md`](.kiro/specs/chrono-fsm/tasks.md) | Checklist the agent worked through and ticked off |
 | [`visual-polish-spec.md`](.kiro/specs/chrono-fsm/visual-polish-spec.md) | Canvas 2D rendering spec for the second pass |
 
@@ -125,7 +138,7 @@ In [`.kiro/steering/`](.kiro/steering):
 
 In [`.kiro/hooks/`](.kiro/hooks):
 
-- **Verify Chrono-FSM** is a manual hook. One click runs the verifier and summarizes the result. It was run in the IDE and all 20 checks passed.
+- **Verify Chrono-FSM** is a manual hook. One click runs the verifier and summarizes the result. It was run in the IDE and the verifier passed (20 checks at that time, 32 now that App 3 is in).
 - **Engine Sync Check** fires when `fsm-engine.js` is saved. It asks the agent to mirror the change into `fsm-engine.ts`, rerun the verifier and flag anything that breaks the zero-modification promise.
 
 ---
@@ -148,10 +161,10 @@ Any static server works too (`python -m http.server`, `npx serve .`). Audio star
 ## Project Layout
 
 ```
-index.html                 both apps, canvas renderers, graph, audio, hash sync
+index.html                 all three apps, canvas renderers, graph, audio, hash sync
 src/core/fsm-engine.js     the engine (runtime source of truth)
 src/core/fsm-engine.ts     typed twin with identical logic and API
-tests/verify_chrono.js     engine checks and structural invariants
+tests/verify_chrono.js     engine checks, structural invariants, vending behavior tests
 serve.js                   local static server for `npm start`
 .kiro/specs/chrono-fsm/    requirements, design, tasks, visual spec
 .kiro/steering/            always-on and file-scoped project rules
@@ -161,7 +174,13 @@ serve.js                   local static server for `npm start`
 
 ## Verification
 
-`tests/verify_chrono.js` runs 20 checks: engine file presence, 50/50 distribution over 200 trials, hash round-trip, and static invariants of `index.html` (engine import, both apps, all three canvases, the animation loop, particles, neon blur and waveform). It does not drive a browser, so the visuals and audio were checked by hand in the browser.
+`tests/verify_chrono.js` runs 32 checks:
+
+- the engine: file presence, 50/50 distribution over 200 trials, hash round trip;
+- static invariants of `index.html`: engine import, the apps, canvases, animation loop, particles, neon blur, waveform;
+- 12 checks for the vending machine. They extract `vendSchema` from `index.html` and run it on the real engine: guard rejections, the 60/25/15 distribution over 600 trials, kick recovery, timeouts, hash round trip, and a check that `fsm-engine.js` contains no app code.
+
+It does not drive a browser, so visuals and audio were checked by hand.
 
 Verified on Node 24. The verifier `require()`s the ESM engine file, which needs a Node version with `require(esm)` support (22.12 or newer).
 

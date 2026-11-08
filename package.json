@@ -1,7 +1,7 @@
 {
   "name": "kiroween-chrono-fsm",
   "version": "1.0.0",
-  "description": "Zero-dependency executable-spec FSM foundation powering two distinct applications for Kiroween 2026 (Skeleton Crew)",
+  "description": "Zero-dependency executable-spec FSM foundation powering three distinct applications for Kiroween 2026 (Skeleton Crew)",
   "main": "index.html",
   "scripts": {
     "test": "node tests/verify_chrono.js",
