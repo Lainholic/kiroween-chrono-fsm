@@ -1,0 +1,19 @@
+{
+  "name": "kiroween-chrono-fsm",
+  "version": "1.0.0",
+  "description": "Zero-dependency executable-spec FSM foundation powering two distinct applications for Kiroween 2026 (Skeleton Crew)",
+  "main": "index.html",
+  "scripts": {
+    "test": "node tests/verify_chrono.js",
+    "start": "node serve.js"
+  },
+  "keywords": [
+    "kiro",
+    "fsm",
+    "state-machine",
+    "spec-driven",
+    "kiroween"
+  ],
+  "author": "muzikinlife",
+  "license": "MIT"
+}

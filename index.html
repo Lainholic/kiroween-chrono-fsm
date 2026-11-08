@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chrono-FSM: One Core, Two Apps (Skeleton Crew)</title>
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --card-bg: #1f2833;
+      --neon-cyan: #66fcf1;
+      --neon-orange: #ff7700;
+      --neon-purple: #c70039;
+      --text: #c5c6c7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Consolas', 'Courier New', monospace; }
+    body { background: var(--bg); color: var(--text); padding: 24px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+    header { text-align: center; margin-bottom: 24px; }
+    header h1 { color: var(--neon-cyan); font-size: 26px; text-shadow: 0 0 10px rgba(102, 252, 241, 0.5); }
+    header p { color: #8892b0; font-size: 13px; margin-top: 6px; }
+    .tabs { display: flex; gap: 12px; margin-bottom: 20px; }
+    .tab-btn {
+      background: #121820; border: 1px solid #334; color: #889; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.2s;
+    }
+    .tab-btn.active { border-color: var(--neon-cyan); color: var(--neon-cyan); box-shadow: 0 0 12px rgba(102,252,241,0.3); background: #1a2332; }
+    .app-container {
+      background: var(--card-bg); border: 1px solid #334455; border-radius: 12px; padding: 28px; width: 100%; max-width: 580px; box-shadow: 0 8px 30px rgba(0,0,0,0.6); display: none; flex-direction: column; align-items: center; text-align: center;
+    }
+    .app-container.active { display: flex; }
+    .fsm-badge {
+      display: inline-block; background: #000; border: 1px solid #45a29e; color: #45a29e; padding: 4px 10px; border-radius: 20px; font-size: 12px; margin-bottom: 16px;
+    }
+    /* Clock Styles */
+    .clock-display { font-size: 54px; font-weight: bold; color: var(--neon-cyan); text-shadow: 0 0 15px rgba(102,252,241,0.6); margin: 18px 0; }
+    .btn-row { display: flex; gap: 12px; margin-top: 14px; }
+    button.action-btn {
+      background: #0f1620; border: 1px solid var(--neon-cyan); color: var(--neon-cyan); padding: 10px 22px; border-radius: 6px; font-size: 14px; cursor: pointer; transition: 0.2s;
+    }
+    button.action-btn:hover { background: var(--neon-cyan); color: #000; box-shadow: 0 0 15px var(--neon-cyan); }
+    /* Jack-in-the-box Styles */
+    .box-stage { display: flex; justify-content: center; margin: 8px 0; }
+    canvas.stage { display: block; background: #0b0c10; border: 1px solid #223; border-radius: 12px; margin: 8px 0; }
+    #fsm-graph-canvas { margin-top: 20px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    #fps-meter { margin-top: 4px; color: #556; }
+    .box-message { font-size: 16px; font-weight: bold; margin-top: 10px; min-height: 24px; }
+    .pop-treat { color: #55ff55; text-shadow: 0 0 10px #55ff55; }
+    .pop-trick { color: #ff3333; text-shadow: 0 0 10px #ff3333; animation: shake 0.3s infinite; }
+    @keyframes shake {
+      0% { transform: translate(1px, 1px) rotate(0deg); }
+      20% { transform: translate(-2px, -1px) rotate(-1deg); }
+      40% { transform: translate(2px, 0px) rotate(1deg); }
+      60% { transform: translate(-1px, 2px) rotate(0deg); }
+      80% { transform: translate(1px, -1px) rotate(1deg); }
+      100% { transform: translate(1px, 1px) rotate(0deg); }
+    }
+    body.screen-shake { animation: shake 0.1s 8; }
+    #state-history { margin-top: 8px; color: #45a29e; }
+    .fsm-status-bar {
+      margin-top: 24px; padding: 10px; width: 100%; max-width: 580px; background: #080a0e; border: 1px solid #222; border-radius: 8px; font-size: 11px; color: #667; text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>CHRONO-FSM</h1>
+    <p>Kiroween 2026: Skeleton Crew Track - One Pure FSM Engine Driving Two Distinct Apps</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('clock')">App 1: Neon Focus Clock</button>
+    <button class="tab-btn" onclick="switchTab('box')">App 2: Spooky Jack-in-the-Box</button>
+  </div>
+
+  <!-- App 1: Neon Clock -->
+  <div id="clock-app" class="app-container active">
+    <div class="fsm-badge">FSM STATE: <span id="clock-state">IDLE</span></div>
+    <canvas id="clock-canvas" class="stage" width="360" height="360" role="img" aria-label="Neon circular focus timer gauge"></canvas>
+    <div class="sr-only" id="clock-time" role="timer">25:00</div>
+    <div id="clock-label" style="color: #8892b0; font-size: 13px;">Ready to Focus</div>
+    <div class="btn-row">
+      <button class="action-btn" id="clock-start-btn" onclick="clockToggle()">START FOCUS</button>
+      <button class="action-btn" onclick="clockReset()">RESET</button>
+    </div>
+  </div>
+
+  <!-- App 2: Jack-in-the-Box -->
+  <div id="box-app" class="app-container">
+    <div class="fsm-badge" style="border-color: var(--neon-orange); color: var(--neon-orange);">
+      FSM STATE: <span id="box-state">CLOSED</span>
+    </div>
+    <div class="box-stage" id="box-stage">
+      <canvas id="box-canvas" class="stage" width="360" height="360" role="img" aria-label="Animated mechanical Jack-in-the-box"></canvas>
+    </div>
+    <div class="box-message" id="box-message">Crank the handle to build tension...</div>
+    <div class="btn-row">
+      <button class="action-btn" id="crank-btn" style="border-color: var(--neon-orange); color: var(--neon-orange);" onclick="crankBox()">CRANK HANDLE 🌀</button>
+      <button class="action-btn" onclick="resetBox()">CLOSE BOX</button>
+    </div>
+  </div>
+
+  <canvas id="fsm-graph-canvas" class="stage" width="580" height="110" role="img" aria-label="Live FSM node graph"></canvas>
+
+  <div class="fsm-status-bar">
+    Engine: <code>src/core/fsm-engine.js</code> | Deterministic Transitions | 50/50 Probabilistic Branching | Zero-Bit URL Hash
+    <div id="state-history">History:</div>
+    <div id="fps-meter">FPS: --</div>
+  </div>
+
+  <script type="module">
+    import { FsmEngine } from './src/core/fsm-engine.js';
+
+    // ---------- Schemas (see .kiro/specs/chrono-fsm/design.md) ----------
+    const clockSchema = {
+      id: 'neon-clock',
+      name: 'Neon Focus Clock',
+      initialState: 'IDLE',
+      context: { remainingSeconds: 1500, cycleCount: 0 },
+      states: {
+        IDLE: {
+          onEnter: (ctx) => { ctx.remainingSeconds = 1500; },
+          transitions: [{ event: 'START', target: 'FOCUSING' }]
+        },
+        FOCUSING: {
+          transitions: [
+            { event: 'PAUSE', target: 'PAUSED' },
+            { event: 'EXPIRE', target: 'BREAK', action: (ctx) => { ctx.cycleCount++; } },
+            { event: 'RESET', target: 'IDLE' }
+          ]
+        },
+        PAUSED: {
+          transitions: [
+            { event: 'RESUME', target: 'FOCUSING' },
+            { event: 'RESET', target: 'IDLE' }
+          ]
+        },
+        BREAK: {
+          transitions: [
+            { event: 'START', target: 'FOCUSING', action: (ctx) => { ctx.remainingSeconds = 1500; } },
+            { event: 'RESET', target: 'IDLE' }
+          ]
+        }
+      }
+    };
+
+    const boxSchema = {
+      id: 'spooky-box',
+      name: 'Halloween Jack-in-the-Box',
+      initialState: 'IDLE',
+      context: { cranks: 0, outcome: null },
+      states: {
+        IDLE: {
+          onEnter: (ctx) => { ctx.cranks = 0; ctx.outcome = null; },
+          transitions: [{ event: 'CRANK', target: 'WINDING_1', action: (ctx) => { ctx.cranks++; } }]
+        },
+        WINDING_1: {
+          transitions: [
+            { event: 'CRANK', target: 'WINDING_2', action: (ctx) => { ctx.cranks++; } },
+            { event: 'RESET', target: 'IDLE' }
+          ],
+          timeout: { durationMs: 15000, targetState: 'IDLE' }
+        },
+        WINDING_2: {
+          transitions: [
+            { event: 'CRANK', target: 'READY_TO_POP', action: (ctx) => { ctx.cranks++; } },
+            { event: 'RESET', target: 'IDLE' }
+          ],
+          timeout: { durationMs: 15000, targetState: 'IDLE' }
+        },
+        READY_TO_POP: {
+          transitions: [
+            { event: 'POP', target: 'POPPED_TREAT', probability: 0.5, action: (ctx) => { ctx.outcome = 'TREAT'; } },
+            { event: 'POP', target: 'POPPED_TRICK', probability: 0.5, action: (ctx) => { ctx.outcome = 'TRICK'; } },
+            { event: 'RESET', target: 'IDLE' }
+          ]
+        },
+        POPPED_TREAT: { transitions: [{ event: 'RESET', target: 'IDLE' }] },
+        POPPED_TRICK: { transitions: [{ event: 'RESET', target: 'IDLE' }] }
+      }
+    };
+
+    // ---------- Web Audio ----------
+    let audioCtx = null;
+    let audioUnlocked = false;
+    // Browsers block audio until a user gesture. Create/resume the context on the first
+    // click, key press or touch; until then all sound calls are silent no-ops.
+    function unlockAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      audioUnlocked = true;
+    }
+    for (const evt of ['pointerdown', 'keydown', 'touchstart']) {
+      window.addEventListener(evt, unlockAudio, { capture: true, passive: true });
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && audioUnlocked && audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    });
+    function getAudio() {
+      return audioUnlocked ? audioCtx : null;
+    }
+    function playBeep(freq, type = 'sine', duration = 0.15, delay = 0, endFreq = null, vol = 0.1) {
+      const ctx = getAudio();
+      if (!ctx) return; // audio still locked (no user gesture yet)
+      const t0 = ctx.currentTime + delay;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, t0 + duration);
+      gain.gain.setValueAtTime(vol, t0);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + duration);
+    }
+
+    // ---------- Engines ----------
+    let clockEngine = new FsmEngine(clockSchema);
+    let boxEngine = new FsmEngine(boxSchema);
+    let activeApp = 'clock';
+    let clockTimer = null;
+    const $ = (id) => document.getElementById(id);
+
+    function engineFor(app) { return app === 'clock' ? clockEngine : boxEngine; }
+    function schemaFor(app) { return app === 'clock' ? clockSchema : boxSchema; }
+
+    // ---------- 0-Bit URL Hash ----------
+    function syncHash() {
+      const hash = `app=${activeApp}&d=${engineFor(activeApp).toHashString()}`;
+      history.replaceState(null, '', '#' + hash);
+    }
+    function parseHash() {
+      const params = new URLSearchParams(location.hash.replace(/^#/, '').replace(/\+/g, '%2B'));
+      const app = params.get('app');
+      const data = params.get('d');
+      return { app: (app === 'clock' || app === 'box') ? app : null, data };
+    }
+    function restoreFromHash() {
+      const { app, data } = parseHash();
+      if (!app) return;
+      activeApp = app;
+      if (data) {
+        const restored = FsmEngine.fromHashString(schemaFor(app), data);
+        if (app === 'clock') { clockEngine.destroy(); clockEngine = restored; }
+        else { boxEngine.destroy(); boxEngine = restored; }
+      }
+    }
+
+    // ---------- History ----------
+    function renderHistory() {
+      const h = engineFor(activeApp).history.slice(-6).map((e) => e.state).join(' → ');
+      $('state-history').textContent = 'History: ' + h;
+    }
+
+    // ---------- Tabs ----------
+    function showTab(target) {
+      const tabs = document.querySelectorAll('.tab-btn');
+      document.querySelectorAll('.app-container').forEach(c => c.classList.remove('active'));
+      tabs.forEach(b => b.classList.remove('active'));
+      tabs[target === 'clock' ? 0 : 1].classList.add('active');
+      $(target + '-app').classList.add('active');
+    }
+    function switchTab(target) {
+      activeApp = target;
+      showTab(target);
+      syncHash();
+      renderHistory();
+    }
+
+    // ---------- Clock ----------
+    function renderClock() {
+      const state = clockEngine.getCurrentState();
+      const secs = clockEngine.getContext().remainingSeconds;
+      $('clock-time').textContent = `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`;
+      $('clock-state').textContent = state;
+      const labels = { IDLE: 'Ready to Focus', FOCUSING: 'Deep Focus Active...', PAUSED: 'Paused', BREAK: 'Break Time!' };
+      const btns = { IDLE: 'START FOCUS', FOCUSING: 'PAUSE', PAUSED: 'RESUME', BREAK: 'START FOCUS' };
+      $('clock-label').textContent = labels[state];
+      $('clock-start-btn').textContent = btns[state];
+    }
+
+    function stopClockTicker() { clearInterval(clockTimer); clockTimer = null; }
+    function startClockTicker() {
+      stopClockTicker();
+      clockTimer = setInterval(() => {
+        const ctx = clockEngine.getContext();
+        if (ctx.remainingSeconds > 0) {
+          ctx.remainingSeconds--;
+          renderClock();
+          if (ctx.remainingSeconds % 5 === 0) syncHash();
+          playBeep(1000, 'square', 0.03, 0, null, 0.02); // tick
+        }
+        if (ctx.remainingSeconds <= 0) clockEngine.send('EXPIRE');
+      }, 1000);
+    }
+
+    function bindClock() {
+      clockEngine.onStateChange((state, prev, ctx, event) => {
+        if (prev && event !== 'RESTORED_FROM_HASH') pushPacket('clock', prev, state, event);
+        if (state === 'FOCUSING') { startClockTicker(); playBeep(440, 'triangle', 0.2); }
+        else stopClockTicker();
+        if (state === 'PAUSED') playBeep(330, 'sine', 0.15);
+        if (state === 'BREAK') { playBeep(880, 'sine', 0.5); playBeep(1175, 'sine', 0.6, 0.15); }
+        renderClock();
+        if (activeApp === 'clock') { syncHash(); renderHistory(); }
+      });
+    }
+
+    function clockToggle() {
+      const s = clockEngine.getCurrentState();
+      if (s === 'IDLE' || s === 'BREAK') clockEngine.send('START');
+      else if (s === 'FOCUSING') clockEngine.send('PAUSE');
+      else if (s === 'PAUSED') clockEngine.send('RESUME');
+    }
+    function clockReset() { clockEngine.send('RESET'); }
+
+    // ---------- Jack-in-the-Box ----------
+    const BOX_VISUALS = {
+      IDLE:         { msg: 'Crank the handle to build tension...', btn: 'CRANK HANDLE 🌀' },
+      WINDING_1:    { msg: 'Tension building... (1/3)', btn: 'CRANK HANDLE 🌀' },
+      WINDING_2:    { msg: 'Spring is tight! (2/3)', btn: 'CRANK HANDLE 🌀' },
+      READY_TO_POP: { msg: '⚠️ MAXIMUM TENSION! TRIGGER THE POP: 50/50 TREAT OR TRICK!', btn: 'TRIGGER POP! 💥' },
+      POPPED_TREAT: { msg: '<span class="pop-treat">🍬 TREAT! A cheerful pumpkin gifted treats!</span>', btn: 'CRANK HANDLE 🌀' },
+      POPPED_TRICK: { msg: '<span class="pop-trick">⚡ TRICK! Jumpscare phantom appeared!</span>', btn: 'CRANK HANDLE 🌀' }
+    };
+
+    function renderBox() {
+      const state = boxEngine.getCurrentState();
+      const v = BOX_VISUALS[state];
+      $('box-state').textContent = state;
+      $('box-message').innerHTML = v.msg;
+      const btn = $('crank-btn');
+      btn.textContent = v.btn;
+      const popped = state === 'POPPED_TREAT' || state === 'POPPED_TRICK';
+      btn.disabled = popped;
+      btn.style.opacity = popped ? '0.5' : '1';
+    }
+
+    function shakeScreen() {
+      document.body.classList.remove('screen-shake');
+      void document.body.offsetWidth;
+      document.body.classList.add('screen-shake');
+      setTimeout(() => document.body.classList.remove('screen-shake'), 900);
+    }
+
+    function bindBox() {
+      boxEngine.onStateChange((state, prev, ctx, event) => {
+        renderBox();
+        if (prev && event !== 'RESTORED_FROM_HASH') { pushPacket('box', prev, state, event); onBoxState(state); }
+        if (event !== 'RESTORED_FROM_HASH') {
+          if (state === 'WINDING_1') playBeep(240, 'sawtooth', 0.12);
+          else if (state === 'WINDING_2') playBeep(360, 'sawtooth', 0.12);
+          else if (state === 'READY_TO_POP') { playBeep(480, 'square', 0.15); playBeep(480, 'square', 0.15, 0.2); }
+          else if (state === 'POPPED_TREAT') {
+            playBeep(523.25, 'triangle', 0.25);
+            playBeep(659.25, 'triangle', 0.25, 0.15);
+            playBeep(783.99, 'triangle', 0.5, 0.3);
+          } else if (state === 'POPPED_TRICK') {
+            playBeep(110, 'sawtooth', 0.8, 0, 60, 0.2);
+            shakeScreen();
+          } else if (state === 'IDLE') playBeep(260, 'sine', 0.15);
+        }
+        if (activeApp === 'box') { syncHash(); renderHistory(); }
+      });
+    }
+
+    function crankBox() {
+      const s = boxEngine.getCurrentState();
+      if (s === 'READY_TO_POP') boxEngine.send('POP');
+      else boxEngine.send('CRANK');
+    }
+    function resetBox() { boxEngine.send('RESET'); }
+
+    // Expose handlers for inline onclick attributes (module scope is private)
+    Object.assign(window, { switchTab, clockToggle, clockReset, crankBox, resetBox });
+
+    // ================= Canvas 2D Visual Engines (unified 60 FPS loop) =================
+    const TAU = Math.PI * 2;
+    const rand = (a, b) => a + Math.random() * (b - a);
+    const lerp = (a, b, k) => a + (b - a) * k;
+    let clockView, boxView, graphView;
+
+    function setupCanvas(id) {
+      const c = $(id);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = Number(c.getAttribute('width'));
+      const h = Number(c.getAttribute('height'));
+      c.width = w * dpr;
+      c.height = h * dpr;
+      c.style.width = w + 'px';
+      c.style.maxWidth = '100%';
+      c.style.height = 'auto';
+      return { c, g: c.getContext('2d'), w, h, dpr };
+    }
+    function begin(v) {
+      v.g.setTransform(v.dpr, 0, 0, v.dpr, 0, 0);
+      v.g.clearRect(0, 0, v.w, v.h);
+    }
+
+    // ---------- Particle system (confetti / sparks / embers / puffs) ----------
+    const particles = [];
+    function spawn(p) {
+      if (particles.length >= 500) return;
+      p.max = p.life;
+      particles.push(p);
+    }
+    const CANDY = ['#ff4fa3', '#ffd23f', '#55ff99', '#66fcf1', '#ff7700', '#b366ff'];
+    function burstTreat() {
+      for (let i = 0; i < 90; i++) { // candy confetti
+        const a = rand(-Math.PI * 0.95, -Math.PI * 0.05), sp = rand(160, 430);
+        spawn({ kind: 'confetti', x: 180 + rand(-12, 12), y: 190, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+                g: 520, rot: rand(0, TAU), vr: rand(-12, 12), life: rand(1.4, 2.6), size: rand(5, 10), color: CANDY[i % CANDY.length] });
+      }
+      for (let i = 0; i < 40; i++) { // golden sparks
+        const a = rand(0, TAU), sp = rand(80, 360);
+        spawn({ kind: 'spark', x: 180, y: 150, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 80,
+                g: 300, rot: 0, vr: 0, life: rand(0.6, 1.3), size: rand(2, 3.6), color: '#ffd966' });
+      }
+    }
+    function burstTrick() {
+      for (let i = 0; i < 50; i++) { // blood-red embers scattering downward
+        spawn({ kind: 'ember', x: 180 + rand(-40, 40), y: 150 + rand(-30, 30), vx: rand(-230, 230), vy: rand(30, 320),
+                g: 320, rot: 0, vr: 0, life: rand(0.9, 2.0), size: rand(2, 4.5), color: i % 3 ? '#ff1a3c' : '#ff6a00' });
+      }
+      for (let i = 0; i < 24; i++) { // hot sparks
+        const a = rand(0, TAU), sp = rand(150, 480);
+        spawn({ kind: 'spark', x: 180, y: 140, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+                g: 200, rot: 0, vr: 0, life: rand(0.3, 0.8), size: rand(1.5, 3), color: '#ffffff' });
+      }
+    }
+    function updateParticles(dt) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.vy += p.g * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.rot += p.vr * dt;
+        p.life -= dt;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+    }
+    function drawParticles(g) {
+      for (const p of particles) {
+        const a = Math.max(0, Math.min(1, (p.life / p.max) * 1.4));
+        g.save();
+        g.globalAlpha = a;
+        if (p.kind === 'confetti') {
+          g.translate(p.x, p.y);
+          g.rotate(p.rot);
+          g.scale(1, Math.abs(Math.cos(p.rot * 1.3)) * 0.8 + 0.2); // tumbling flip
+          g.fillStyle = p.color;
+          g.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+        } else if (p.kind === 'puff') {
+          const r = p.size + (1 - p.life / p.max) * 22;
+          g.fillStyle = 'rgba(190,150,230,0.35)';
+          g.beginPath(); g.arc(p.x, p.y, r, 0, TAU); g.fill();
+        } else { // spark / ember
+          g.globalCompositeOperation = 'lighter';
+          g.strokeStyle = p.color; g.fillStyle = p.color;
+          g.lineWidth = p.size * 0.6;
+          g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x - p.vx * 0.03, p.y - p.vy * 0.03); g.stroke();
+          g.beginPath(); g.arc(p.x, p.y, p.size * a + 0.5, 0, TAU); g.fill();
+        }
+        g.restore();
+      }
+    }
+
+    // ---------- App 1: Neon arc gauge + oscilloscope ----------
+    const CLOCK_TOTAL = 1500;
+    const clockVis = { p: 1, amp: 5, phase: 0 };
+    function updateClockVis(dt) {
+      const s = clockEngine.getCurrentState();
+      const target = s === 'BREAK' ? 1 : clockEngine.getContext().remainingSeconds / CLOCK_TOTAL;
+      clockVis.p = lerp(clockVis.p, target, 1 - Math.exp(-8 * dt));
+      clockVis.amp = lerp(clockVis.amp, { IDLE: 5, FOCUSING: 22, PAUSED: 1, BREAK: 10 }[s], 1 - Math.exp(-4 * dt));
+      clockVis.phase += { IDLE: 1.5, FOCUSING: 9, PAUSED: 0.5, BREAK: 2.5 }[s] * dt;
+    }
+    function drawClock(t) {
+      const g = clockView.g;
+      begin(clockView);
+      const s = clockEngine.getCurrentState();
+      const ctxData = clockEngine.getContext();
+      const color = s === 'BREAK' ? '#55ff99' : '#66fcf1';
+      const rgb = s === 'BREAK' ? '85,255,153' : '102,252,241';
+      // sinusoidal breathing pulse: alpha(t) = 0.8 + 0.2 sin(3t)
+      const breath = s === 'FOCUSING' ? 0.8 + 0.2 * Math.sin(t * 3.0) : (s === 'PAUSED' ? 0.55 : 0.9);
+      const cx = 180, cy = 150, R = 115;
+
+      const bg = g.createRadialGradient(cx, cy, 10, cx, cy, 175);
+      bg.addColorStop(0, `rgba(${rgb},${0.09 * breath})`);
+      bg.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = bg;
+      g.fillRect(0, 0, 360, 360);
+
+      // minute ticks
+      g.lineCap = 'round';
+      for (let i = 0; i < 60; i++) {
+        const a = (i / 60) * TAU - Math.PI / 2, major = i % 5 === 0;
+        const r0 = R + 18, r1 = r0 + (major ? 9 : 4);
+        g.strokeStyle = `rgba(${rgb},${major ? 0.5 : 0.2})`;
+        g.lineWidth = major ? 2 : 1;
+        g.beginPath();
+        g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
+        g.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+        g.stroke();
+      }
+
+      // background track
+      g.lineWidth = 14;
+      g.strokeStyle = 'rgba(102, 252, 241, 0.15)';
+      g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.stroke();
+
+      // multi-pass neon progress arc: theta = 2*pi*remaining/total
+      const a0 = -Math.PI / 2, a1 = a0 + TAU * Math.max(clockVis.p, 0.0005);
+      for (const [blur, w, alpha] of [[25, 14, 0.35], [15, 9, 0.6], [6, 4, 1]]) {
+        g.save();
+        g.shadowColor = color; g.shadowBlur = blur;
+        g.strokeStyle = color; g.lineWidth = w;
+        g.globalAlpha = alpha * breath;
+        g.beginPath(); g.arc(cx, cy, R, a0, a1); g.stroke();
+        g.restore();
+      }
+      // glowing tip
+      g.save();
+      g.shadowColor = '#ffffff'; g.shadowBlur = 20; g.fillStyle = '#ffffff'; g.globalAlpha = breath;
+      g.beginPath(); g.arc(cx + Math.cos(a1) * R, cy + Math.sin(a1) * R, 4.5, 0, TAU); g.fill();
+      g.restore();
+
+      // center readout
+      const secs = ctxData.remainingSeconds;
+      const text = `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`;
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.save();
+      g.font = 'bold 54px Consolas, "Courier New", monospace';
+      g.shadowColor = color; g.shadowBlur = 18 * breath;
+      g.fillStyle = color; g.globalAlpha = breath;
+      g.fillText(text, cx, cy - 4);
+      g.restore();
+      g.font = '13px Consolas, "Courier New", monospace';
+      g.fillStyle = '#8892b0';
+      g.fillText({ IDLE: 'READY TO FOCUS', FOCUSING: 'DEEP FOCUS', PAUSED: 'PAUSED', BREAK: 'BREAK TIME' }[s], cx, cy + 40);
+      g.fillStyle = `rgba(${rgb},0.6)`;
+      g.fillText(`CYCLE ${ctxData.cycleCount}`, cx, cy - 48);
+
+      // live oscilloscope waveform (focus energy)
+      const wy = 318, x0 = 30, x1 = 330;
+      g.strokeStyle = `rgba(${rgb},0.12)`; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(x0, wy); g.lineTo(x1, wy); g.stroke();
+      g.save();
+      g.strokeStyle = color; g.shadowColor = color; g.shadowBlur = 10; g.lineWidth = 2; g.lineJoin = 'round';
+      g.beginPath();
+      for (let x = x0; x <= x1; x += 3) {
+        const env = Math.sin(((x - x0) / (x1 - x0)) * Math.PI);
+        let y = Math.sin(x * 0.06 + clockVis.phase) * clockVis.amp * 0.6;
+        y += Math.sin(x * 0.17 - clockVis.phase * 1.7) * clockVis.amp * 0.25;
+        if (s === 'FOCUSING') { // cybernetic spikes
+          y += Math.sin(x * 0.45 + clockVis.phase * 3) * Math.pow(Math.max(0, Math.sin(x * 0.03 + t * 2.2)), 8) * clockVis.amp * 0.9;
+        }
+        if (x === x0) g.moveTo(x, wy + y * env); else g.lineTo(x, wy + y * env);
+      }
+      g.stroke();
+      g.restore();
+    }
+
+    // ---------- App 2: procedural mechanical Jack-in-the-box ----------
+    const boxVis = { lid: 0, lidV: 0, pop: 0, popV: 0, crank: 0, kick: 0, shake: 0, flash: 0, flashKind: 'treat', glitch: 0, puffT: 0, bolts: [] };
+    const isPopped = (s) => s === 'POPPED_TREAT' || s === 'POPPED_TRICK';
+
+    function snapBoxVisuals() {
+      const s = boxEngine.getCurrentState();
+      boxVis.lid = isPopped(s) ? 1 : 0; boxVis.lidV = 0;
+      boxVis.pop = isPopped(s) ? 1 : 0; boxVis.popV = 0;
+    }
+    function onBoxState(state) {
+      if (state === 'WINDING_1' || state === 'WINDING_2' || state === 'READY_TO_POP') boxVis.kick = 14;
+      if (state === 'POPPED_TREAT') { burstTreat(); boxVis.flash = 1; boxVis.flashKind = 'treat'; }
+      if (state === 'POPPED_TRICK') { burstTrick(); boxVis.flash = 1; boxVis.flashKind = 'trick'; boxVis.glitch = 1; boxVis.shake = 1; }
+    }
+    function updateBoxVis(dt) {
+      const s = boxEngine.getCurrentState();
+      const popped = isPopped(s);
+      // spring dynamics for lid flip and popper coil (with recoil overshoot)
+      boxVis.lidV += ((popped ? 1 : 0) - boxVis.lid) * 220 * dt; boxVis.lidV *= Math.max(0, 1 - 7 * dt);
+      boxVis.lid = Math.max(-0.2, Math.min(1.3, boxVis.lid + boxVis.lidV * dt));
+      boxVis.popV += ((popped ? 1 : 0) - boxVis.pop) * 150 * dt; boxVis.popV *= Math.max(0, 1 - 4.5 * dt);
+      boxVis.pop += boxVis.popV * dt;
+      const omega = { IDLE: 0.6, WINDING_1: 3, WINDING_2: 7, READY_TO_POP: 12 }[s] ?? 0.4;
+      boxVis.crank += (omega + boxVis.kick) * dt;
+      boxVis.kick *= Math.exp(-3 * dt);
+      boxVis.flash = Math.max(0, boxVis.flash - dt * 1.1);
+      boxVis.glitch = Math.max(0, boxVis.glitch - dt / 1.4);
+      boxVis.shake = Math.max(0, boxVis.shake - dt / 1.2);
+      // seam puffs while tension builds
+      const rate = s === 'WINDING_2' ? 12 : (s === 'READY_TO_POP' ? 30 : 0);
+      boxVis.puffT += rate * dt;
+      while (boxVis.puffT >= 1) {
+        boxVis.puffT -= 1;
+        spawn({ kind: 'puff', x: rand(104, 256), y: Math.random() < 0.6 ? 220 : 300, vx: rand(-20, 20), vy: rand(-60, -20), g: -10, rot: 0, vr: 0, life: rand(0.5, 0.9), size: rand(3, 6) });
+      }
+      // blood lightning during the Trick screamer
+      if (s === 'POPPED_TRICK' && boxVis.glitch > 0.15 && Math.random() < 0.3) {
+        const pts = []; let x = rand(40, 320);
+        for (let y = 0; y < 230; y += 22) { pts.push([x, y]); x += rand(-26, 26); }
+        boxVis.bolts.push({ pts, life: 0.12 });
+      }
+      for (let i = boxVis.bolts.length - 1; i >= 0; i--) { boxVis.bolts[i].life -= dt; if (boxVis.bolts[i].life <= 0) boxVis.bolts.splice(i, 1); }
+      updateParticles(dt);
+    }
+
+    function drawPumpkin(g, x, y, sc, t) {
+      g.save();
+      g.translate(x, y); g.scale(sc, sc);
+      g.shadowColor = '#ff9900'; g.shadowBlur = 28;
+      const grad = g.createRadialGradient(-8, -10, 4, 0, 0, 42);
+      grad.addColorStop(0, '#ffb347'); grad.addColorStop(1, '#e8590c');
+      g.fillStyle = grad;
+      g.beginPath(); g.ellipse(0, 0, 40, 33, 0, 0, TAU); g.fill();
+      g.shadowBlur = 0;
+      g.strokeStyle = 'rgba(140,50,0,0.55)'; g.lineWidth = 2;
+      for (const k of [-22, -10, 10, 22]) { g.beginPath(); g.ellipse(k * 0.5, 0, Math.abs(k) * 0.9, 32, 0, 0, TAU); g.stroke(); }
+      g.fillStyle = '#3f8f2f'; g.fillRect(-4, -42, 8, 12);
+      const glow = 0.75 + 0.25 * Math.sin(t * 8);
+      g.fillStyle = `rgba(255,230,102,${glow})`; g.shadowColor = '#ffe066'; g.shadowBlur = 14;
+      g.beginPath(); g.moveTo(-22, -6); g.lineTo(-8, -6); g.lineTo(-15, -18); g.closePath(); g.fill();
+      g.beginPath(); g.moveTo(8, -6); g.lineTo(22, -6); g.lineTo(15, -18); g.closePath(); g.fill();
+      g.beginPath(); g.arc(0, 4, 20, 0.15 * Math.PI, 0.85 * Math.PI); g.lineWidth = 5; g.lineCap = 'round'; g.strokeStyle = `rgba(255,230,102,${glow})`; g.stroke();
+      g.restore();
+    }
+    function drawPhantom(g, x, y, sc, t) {
+      g.save();
+      g.translate(x, y); g.scale(sc, sc);
+      g.shadowColor = '#ff2244'; g.shadowBlur = 32;
+      g.fillStyle = 'rgba(225,232,255,0.9)';
+      g.beginPath();
+      g.moveTo(-38, 34);
+      g.lineTo(-38, -4);
+      g.bezierCurveTo(-38, -46, 38, -46, 38, -4);
+      g.lineTo(38, 34);
+      for (let i = 0; i < 5; i++) { // wavy tattered hem
+        const px = 38 - (i + 1) * 15.2;
+        g.quadraticCurveTo(38 - i * 15.2 - 7.6, 34 + (i % 2 ? -10 : 12) + Math.sin(t * 9 + i) * 3, px, 34);
+      }
+      g.closePath(); g.fill();
+      g.shadowBlur = 0;
+      g.fillStyle = '#12000a';
+      g.beginPath(); g.ellipse(-14, -8, 9, 13, 0.15, 0, TAU); g.fill();
+      g.beginPath(); g.ellipse(14, -8, 9, 13, -0.15, 0, TAU); g.fill();
+      g.fillStyle = '#ff2244'; g.shadowColor = '#ff2244'; g.shadowBlur = 10;
+      g.beginPath(); g.arc(-14, -6, 3, 0, TAU); g.fill();
+      g.beginPath(); g.arc(14, -6, 3, 0, TAU); g.fill();
+      g.shadowBlur = 0; g.fillStyle = '#12000a';
+      g.beginPath(); g.ellipse(0, 18, 11, 12 + Math.abs(Math.sin(t * 28)) * 6, 0, 0, TAU); g.fill(); // screaming jaw
+      g.restore();
+    }
+
+    function drawBox(t) {
+      const g = boxView.g, v = boxVis;
+      begin(boxView);
+      const s = boxEngine.getCurrentState();
+
+      // backdrop + outcome flash
+      const bg = g.createRadialGradient(180, 190, 20, 180, 190, 260);
+      bg.addColorStop(0, '#1b1426'); bg.addColorStop(1, '#0b0c10');
+      g.fillStyle = bg; g.fillRect(0, 0, 360, 360);
+      if (v.flash > 0) {
+        const fl = g.createRadialGradient(180, 180, 10, 180, 180, 280);
+        const c = v.flashKind === 'treat' ? '255,170,40' : '255,0,40';
+        fl.addColorStop(0, `rgba(${c},${0.55 * v.flash})`); fl.addColorStop(1, `rgba(${c},0)`);
+        g.fillStyle = fl; g.fillRect(0, 0, 360, 360);
+      }
+
+      // tension shake (+-2 / +-5 / +-8 px) and idle sway
+      const amp = { WINDING_1: 2, WINDING_2: 5, READY_TO_POP: 8 }[s] ?? (s === 'POPPED_TRICK' ? 14 * v.shake : 0);
+      const ox = (Math.random() * 2 - 1) * amp, oy = (Math.random() * 2 - 1) * amp * 0.5;
+      const sway = s === 'IDLE' ? Math.sin(t * 1.2) * 0.02 : 0;
+      g.save();
+      g.translate(180 + ox, 320 + oy); g.rotate(sway); g.translate(-180, -320);
+
+      // escaping light beams from the seams
+      if (s === 'READY_TO_POP') {
+        const pulse = 0.5 + 0.5 * Math.sin(t * 10);
+        g.save(); g.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < 5; i++) {
+          const bx = 120 + i * 30, lean = (i - 2) * 22;
+          const bm = g.createLinearGradient(0, 220, 0, 60);
+          bm.addColorStop(0, `rgba(255,140,30,${0.45 * pulse})`); bm.addColorStop(1, 'rgba(255,140,30,0)');
+          g.fillStyle = bm;
+          g.beginPath(); g.moveTo(bx - 6, 220); g.lineTo(bx + 6, 220); g.lineTo(bx + lean + 14, 60); g.lineTo(bx + lean - 14, 60); g.closePath(); g.fill();
+        }
+        g.restore();
+      }
+
+      // popper on elastic coil (emerges from the box)
+      const h = Math.max(0, v.pop) * 150;
+      if (h > 1) {
+        const outcomeTrick = s === 'POPPED_TRICK';
+        g.strokeStyle = '#b8b8c8'; g.lineWidth = 4; g.lineJoin = 'round';
+        g.beginPath(); g.moveTo(180, 224);
+        const N = 12;
+        for (let i = 1; i <= N; i++) g.lineTo(180 + (i % 2 ? 15 : -15), 224 - (h * i) / N);
+        g.stroke();
+        const sc = outcomeTrick ? 1 + Math.min(1.3, v.pop * 1.2) : 1 + Math.min(0.2, v.pop * 0.2);
+        const wob = Math.sin(t * 14) * Math.min(6, Math.abs(v.popV) * 0.05);
+        const hy = 224 - h - 36 * sc;
+        if (outcomeTrick) drawPhantom(g, 180 + wob, hy, sc, t); else drawPumpkin(g, 180 + wob, hy, sc, t);
+      }
+
+      // velvet body
+      const body = g.createLinearGradient(100, 220, 260, 320);
+      body.addColorStop(0, '#6a2f9a'); body.addColorStop(1, '#2a1240');
+      g.fillStyle = body; g.fillRect(100, 220, 160, 100);
+      g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 2;
+      for (let x = 115; x < 260; x += 15) { g.beginPath(); g.moveTo(x, 224); g.lineTo(x, 316); g.stroke(); }
+      // brass trim, rivets and ornament
+      g.strokeStyle = '#d4a72c'; g.lineWidth = 4; g.strokeRect(102, 222, 156, 96);
+      g.fillStyle = '#f0c850';
+      for (const [rx, ry] of [[108, 228], [252, 228], [108, 312], [252, 312]]) { g.beginPath(); g.arc(rx, ry, 3.5, 0, TAU); g.fill(); }
+      g.beginPath(); g.moveTo(180, 250); g.lineTo(196, 270); g.lineTo(180, 290); g.lineTo(164, 270); g.closePath(); g.fill();
+      g.fillStyle = '#2a1240'; g.beginPath(); g.arc(180, 270, 5, 0, TAU); g.fill();
+      // glowing seams
+      if (s === 'READY_TO_POP' || s === 'WINDING_2') {
+        const k = s === 'READY_TO_POP' ? 0.6 + 0.4 * Math.sin(t * 10) : 0.35;
+        g.save(); g.strokeStyle = '#ff8c1e'; g.shadowColor = '#ff8c1e'; g.shadowBlur = 14 * k; g.globalAlpha = k; g.lineWidth = 3;
+        g.beginPath(); g.moveTo(100, 221); g.lineTo(260, 221); g.moveTo(180, 224); g.lineTo(180, 245); g.moveTo(180, 295); g.lineTo(180, 318); g.stroke();
+        g.restore();
+      }
+
+      // lid hinged at the left edge; spring recoil via lid angle overshoot
+      g.save();
+      g.translate(100, 220); g.rotate(-v.lid * 1.9);
+      const lg = g.createLinearGradient(0, -22, 0, 0);
+      lg.addColorStop(0, '#7a3cab'); lg.addColorStop(1, '#4a1f70');
+      g.fillStyle = lg; g.fillRect(0, -22, 160, 22);
+      g.strokeStyle = '#d4a72c'; g.lineWidth = 3; g.strokeRect(1.5, -20.5, 157, 19);
+      g.fillStyle = '#f0c850'; g.beginPath(); g.arc(140, -11, 4, 0, TAU); g.fill();
+      g.restore();
+      g.fillStyle = '#f0c850'; g.beginPath(); g.arc(100, 220, 5, 0, TAU); g.fill(); // brass hinge
+
+      // orange crank lever on the right side
+      g.save();
+      g.translate(260, 270);
+      g.fillStyle = '#b8860b'; g.beginPath(); g.arc(0, 0, 9, 0, TAU); g.fill();
+      g.rotate(v.crank);
+      g.strokeStyle = '#ff7700'; g.lineWidth = 7; g.lineCap = 'round';
+      g.shadowColor = '#ff7700'; g.shadowBlur = s === 'READY_TO_POP' ? 16 : 6;
+      g.beginPath(); g.moveTo(0, 0); g.lineTo(38, 0); g.stroke();
+      g.fillStyle = '#ffa040'; g.beginPath(); g.arc(38, 0, 9, 0, TAU); g.fill();
+      g.restore();
+
+      g.restore(); // end shake transform
+
+      drawParticles(g);
+
+      // blood lightning
+      if (v.bolts.length) {
+        g.save(); g.strokeStyle = '#ff2040'; g.shadowColor = '#ff0030'; g.shadowBlur = 16; g.lineWidth = 2.5;
+        for (const b of v.bolts) { g.beginPath(); b.pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke(); }
+        g.restore();
+      }
+
+      // glitch: red flash, scanlines, horizontal slice displacement
+      if (v.glitch > 0) {
+        g.fillStyle = `rgba(255,0,40,${0.22 * v.glitch})`; g.fillRect(0, 0, 360, 360);
+        g.fillStyle = `rgba(0,0,0,${0.25 * v.glitch})`;
+        for (let y = 0; y < 360; y += 4) g.fillRect(0, y, 360, 1);
+        if (v.glitch > 0.2) {
+          g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
+          const d = boxView.dpr;
+          for (let i = 0; i < 5; i++) {
+            const sy = Math.floor(rand(0, 330)), sh = Math.floor(rand(6, 28)), dx = rand(-22, 22) * v.glitch;
+            g.drawImage(boxView.c, 0, sy * d, boxView.c.width, sh * d, dx * d, sy * d, boxView.c.width, sh * d);
+          }
+          g.restore();
+        }
+      }
+    }
+
+    // ---------- FSM Node Graph Visualizer ----------
+    const packets = [];
+    function pushPacket(app, from, to, event) {
+      packets.push({ app, from, to, event, t0: performance.now() / 1000 });
+      if (packets.length > 12) packets.shift();
+    }
+    function graphLayout(app) {
+      const ids = Object.keys(schemaFor(app).states);
+      const pos = {};
+      const pad = 52;
+      ids.forEach((id, i) => { pos[id] = { x: pad + (i * (580 - 2 * pad)) / Math.max(1, ids.length - 1), y: 44, i }; });
+      return { ids, pos };
+    }
+    const NODE_R = 14;
+    function edgeGeom(layout, from, to) {
+      const a = layout.pos[from], b = layout.pos[to];
+      const dist = Math.abs(b.i - a.i);
+      const off = Math.min(48, 12 + (dist - 1) * 16) * (b.i > a.i ? -1 : 1); // forward arcs above, back arcs below
+      return { p0: a, p2: b, c: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 + off } };
+    }
+    function bezier(geo, u) {
+      const m = 1 - u;
+      return {
+        x: m * m * geo.p0.x + 2 * m * u * geo.c.x + u * u * geo.p2.x,
+        y: m * m * geo.p0.y + 2 * m * u * geo.c.y + u * u * geo.p2.y
+      };
+    }
+    function graphEdges(app) {
+      const schema = schemaFor(app), edges = new Map();
+      for (const [from, st] of Object.entries(schema.states)) {
+        for (const tr of st.transitions || []) {
+          const key = from + '>' + tr.target;
+          if (!edges.has(key)) edges.set(key, { from, to: tr.target, events: new Set() });
+          edges.get(key).events.add(tr.event);
+        }
+        if (st.timeout) {
+          const key = from + '>' + st.timeout.targetState;
+          if (!edges.has(key)) edges.set(key, { from, to: st.timeout.targetState, events: new Set() });
+          edges.get(key).events.add('TIMEOUT');
+        }
+      }
+      return [...edges.values()];
+    }
+    function drawGraph(t) {
+      const g = graphView.g;
+      begin(graphView);
+      const app = activeApp;
+      const layout = graphLayout(app);
+      const accent = app === 'clock' ? '102,252,241' : '255,119,0';
+      const current = engineFor(app).getCurrentState();
+
+      g.fillStyle = '#080a0e'; g.fillRect(0, 0, 580, 110);
+
+      // edges with arrowheads
+      for (const e of graphEdges(app)) {
+        const geo = edgeGeom(layout, e.from, e.to);
+        const soft = [...e.events].every((ev) => ev === 'RESET' || ev === 'TIMEOUT');
+        g.save();
+        g.strokeStyle = `rgba(${accent},${soft ? 0.22 : 0.5})`; g.lineWidth = 1.5;
+        if (soft) g.setLineDash([4, 4]);
+        g.beginPath(); g.moveTo(geo.p0.x, geo.p0.y); g.quadraticCurveTo(geo.c.x, geo.c.y, geo.p2.x, geo.p2.y); g.stroke();
+        g.setLineDash([]);
+        let u = 1; // arrow stops at node boundary
+        while (u > 0.5 && Math.hypot(bezier(geo, u).x - geo.p2.x, bezier(geo, u).y - geo.p2.y) < NODE_R + 3) u -= 0.01;
+        const tip = bezier(geo, u), prev = bezier(geo, u - 0.03), ang = Math.atan2(tip.y - prev.y, tip.x - prev.x);
+        g.fillStyle = `rgba(${accent},${soft ? 0.4 : 0.8})`;
+        g.translate(tip.x, tip.y); g.rotate(ang);
+        g.beginPath(); g.moveTo(0, 0); g.lineTo(-7, -3.5); g.lineTo(-7, 3.5); g.closePath(); g.fill();
+        g.restore();
+      }
+
+      // nodes
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '9px Consolas, monospace';
+      for (const id of layout.ids) {
+        const p = layout.pos[id], active = id === current;
+        g.save();
+        if (active) {
+          const r = NODE_R + 4 + 2 * Math.sin(t * 5);
+          g.shadowColor = `rgb(${accent})`; g.shadowBlur = 22;
+          g.fillStyle = `rgba(${accent},0.28)`;
+          g.beginPath(); g.arc(p.x, p.y, r, 0, TAU); g.fill();
+          g.shadowBlur = 0;
+          g.translate(p.x, p.y); g.rotate(t * 1.6); // rotating halo ring
+          g.setLineDash([7, 6]); g.strokeStyle = `rgba(${accent},0.95)`; g.lineWidth = 2;
+          g.beginPath(); g.arc(0, 0, NODE_R + 8, 0, TAU); g.stroke();
+          g.restore(); g.save();
+        }
+        g.fillStyle = '#0b0c10';
+        g.strokeStyle = active ? `rgb(${accent})` : `rgba(${accent},0.45)`;
+        g.lineWidth = active ? 3 : 1.5;
+        if (active) { g.shadowColor = `rgb(${accent})`; g.shadowBlur = 14; }
+        g.beginPath(); g.arc(p.x, p.y, NODE_R, 0, TAU); g.fill(); g.stroke();
+        g.restore();
+        g.lineWidth = 3; g.strokeStyle = '#080a0e'; g.lineJoin = 'round';
+        g.strokeText(id, p.x, p.y + NODE_R + 16);
+        g.fillStyle = active ? `rgb(${accent})` : '#8892b0';
+        g.fillText(id, p.x, p.y + NODE_R + 16);
+      }
+
+      // transition energy packets travelling along the edge
+      const now = performance.now() / 1000;
+      for (let i = packets.length - 1; i >= 0; i--) {
+        const pk = packets[i], u = (now - pk.t0) / 0.7;
+        if (u >= 1) { packets.splice(i, 1); continue; }
+        if (pk.app !== app || !layout.pos[pk.from] || !layout.pos[pk.to]) continue;
+        const geo = edgeGeom(layout, pk.from, pk.to), e = u * u * (3 - 2 * u);
+        g.save(); g.globalCompositeOperation = 'lighter';
+        for (let k = 0; k < 5; k++) {
+          const q = bezier(geo, Math.max(0, e - k * 0.03));
+          g.fillStyle = `rgba(255,255,255,${0.7 - k * 0.14})`; g.shadowColor = `rgb(${accent})`; g.shadowBlur = 14;
+          g.beginPath(); g.arc(q.x, q.y, 4.5 - k * 0.6, 0, TAU); g.fill();
+        }
+        g.restore();
+        const q = bezier(geo, e);
+        g.fillStyle = `rgba(${accent},${1 - u})`; g.font = '9px Consolas, monospace';
+        g.fillText(pk.event || '', q.x, q.y - 12);
+      }
+    }
+
+    // ---------- Unified requestAnimationFrame loop ----------
+    let lastT = 0, fpsFrames = 0, fpsStamp = 0;
+    function frame(now) {
+      const t = now / 1000;
+      const dt = Math.min(0.05, lastT ? t - lastT : 0.016);
+      lastT = t;
+      updateClockVis(dt);
+      updateBoxVis(dt);
+      if (activeApp === 'clock') drawClock(t); else drawBox(t);
+      drawGraph(t);
+      fpsFrames++;
+      if (t - fpsStamp >= 0.5) {
+        $('fps-meter').textContent = `FPS: ${Math.round(fpsFrames / (t - fpsStamp))} | particles: ${particles.length}`;
+        fpsFrames = 0; fpsStamp = t;
+      }
+      requestAnimationFrame(frame);
+    }
+    function initVisuals() {
+      clockView = setupCanvas('clock-canvas');
+      boxView = setupCanvas('box-canvas');
+      graphView = setupCanvas('fsm-graph-canvas');
+      clockVis.p = clockEngine.getCurrentState() === 'BREAK' ? 1 : clockEngine.getContext().remainingSeconds / CLOCK_TOTAL;
+      snapBoxVisuals();
+      requestAnimationFrame(frame);
+    }
+    // ---------- Boot ----------
+    restoreFromHash();
+    bindClock();
+    bindBox();
+    renderClock();
+    renderBox();
+    initVisuals();
+    if (clockEngine.getCurrentState() === 'FOCUSING') startClockTicker();
+    showTab(activeApp);
+    syncHash();
+    renderHistory();
+  </script>
+</body>
+</html>
