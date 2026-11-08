@@ -14,10 +14,9 @@ All three apps import the same file, `src/core/fsm-engine.js`, and differ only i
 
 ## Live Screenshots & Kiro Proof
 
-| App 1: Neon Focus Clock Running | Kiro IDE & Automated Hook Verification | Kiro Spec/Hook File Structure |
+| App 1: Neon Focus Clock | Kiro IDE & Automated Hook Verification | Kiro Spec/Hook File Structure |
 | :---: | :---: | :---: |
 | ![Neon Focus Clock](docs/images/app1-neon-clock-running.png) | ![Kiro Hook Verified](docs/images/kiro-hooks-verified.jpg) | ![Kiro Tree](docs/images/kiro-file-tree.png) |
-
 
 ---
 
@@ -122,6 +121,12 @@ index.html#app=<clock|box|vend>&d=<base64 snapshot>
 
 This project uses three Kiro features together.
 
+<p align="center">
+  <img src="docs/images/kiro-file-tree.png" alt="Project file tree showing .kiro/hooks, .kiro/specs/chrono-fsm and .kiro/steering" width="260">
+</p>
+
+*The `.kiro` folder: two hooks, four spec documents and three steering files.*
+
 ### 1. Specs: spec-driven development
 
 Everything started as a spec under [`.kiro/specs/chrono-fsm/`](.kiro/specs/chrono-fsm). App 3 followed the same loop: requirements and schema design were written first (`REQ-VND-01` to `REQ-VND-06`), then implemented against Task 9.
@@ -145,9 +150,15 @@ In [`.kiro/steering/`](.kiro/steering):
 
 ### 3. Hooks: automation around the engine
 
+<p align="center">
+  <img src="docs/images/kiro-hooks-verified.jpg" alt="Kiro IDE showing the Agent Hooks panel and the agent reporting the result of the Verify Chrono-FSM hook" width="860">
+</p>
+
+*The Verify Chrono-FSM hook was run from the Kiro IDE. The agent ran the verifier and summarized the result, with 0 failures and the engine confirmed free of app code. The panel labels both hooks "legacy", which refers to the `.kiro.hook` file format.*
+
 In [`.kiro/hooks/`](.kiro/hooks):
 
-- **Verify Chrono-FSM** is a manual hook. One click runs the verifier and summarizes the result. It was run in the IDE and the verifier passed (20 checks at that time, 32 now that App 3 is in).
+- **Verify Chrono-FSM** is a manual hook. One click runs the verifier and summarizes the result. It was run in the IDE and the verifier passed with 0 failures (see the screenshot above).
 - **Engine Sync Check** fires when `fsm-engine.js` is saved. It asks the agent to mirror the change into `fsm-engine.ts`, rerun the verifier and flag anything that breaks the zero-modification promise.
 
 ---
@@ -183,11 +194,11 @@ serve.js                   local static server for `npm start`
 
 ## Verification
 
-`tests/verify_chrono.js` runs 32 checks:
+`tests/verify_chrono.js` runs 31 checks:
 
 - the engine: file presence, 50/50 distribution over 200 trials, hash round trip;
 - static invariants of `index.html`: engine import, the apps, canvases, animation loop, particles, neon blur, waveform;
-- 12 checks for the vending machine. They extract `vendSchema` from `index.html` and run it on the real engine: guard rejections, the 60/25/15 distribution over 600 trials, kick recovery, timeouts, hash round trip, and a check that `fsm-engine.js` contains no app code.
+- 11 checks for the vending machine. They extract `vendSchema` from `index.html` and run it on the real engine: guard rejections, the 60/25/15 distribution over 600 trials, kick recovery, timeouts, hash round trip, and a check that `fsm-engine.js` contains no app code.
 
 It does not drive a browser, so visuals and audio were checked by hand.
 
