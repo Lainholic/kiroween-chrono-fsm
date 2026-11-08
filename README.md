@@ -5,29 +5,29 @@
 
 | App 1: Neon Focus Clock | App 2: Halloween Jack-in-the-Box |
 | --- | --- |
-| Pomodoro-style deep work timer | Crank-and-pop music box with a 50/50 Treat or Trick |
-| `IDLE → FOCUSING ⇄ PAUSED → BREAK` | `IDLE → WINDING_1 → WINDING_2 → READY_TO_POP → POPPED_TREAT / POPPED_TRICK` |
+| Pomodoro-style deep work timer on a neon arc gauge | Crank-and-pop mechanical music box with a 50/50 Treat or Trick |
+| `IDLE → FOCUSING ⇄ PAUSED`, then `BREAK` | `IDLE → WINDING_1 → WINDING_2 → READY_TO_POP → POPPED_TREAT / POPPED_TRICK` |
 
-Both apps import the same file, `src/core/fsm-engine.js`, and differ only in the **schema** (a plain object) they hand to it.
+Both apps import the same file, `src/core/fsm-engine.js`, and differ only in the **schema** (a plain object) they hand to it. Everything you see on screen, including the node graph, is driven by that one engine.
 
 ---
 
 ## The Skeleton Idea
 
-The track asks for a clean, flexible skeleton that proves its versatility by powering two distinct applications. This project makes that literal:
+The track asks for a clean, flexible skeleton that proves its versatility by powering two distinct applications. This project makes that literal.
 
 ```
-              ┌─────────────────────────────┐
-              │  src/core/fsm-engine.js     │   ~150 lines, no dependencies
-              │  states · transitions ·     │
-              │  guards · probability ·     │
-              │  timeouts · hash snapshots  │
-              └──────────────┬──────────────┘
-          schema A           │           schema B
-    ┌────────────────────────┴───────────────────────┐
-    ▼                                                ▼
- Neon Focus Clock                          Jack-in-the-Box
- (timer, chime, arc gauge)                 (tension, 50/50 pop, particles)
+                 +--------------------------------+
+                 |   src/core/fsm-engine.js       |   ~150 lines, no dependencies
+                 |   states, transitions, guards, |
+                 |   probability, timeouts,       |
+                 |   hash snapshots               |
+                 +----------------+---------------+
+                       schema A   |   schema B
+              +-------------------+-------------------+
+              v                                       v
+      Neon Focus Clock                         Jack-in-the-Box
+  (timer, chime, arc gauge)             (tension, 50/50 pop, particles)
 ```
 
 The engine knows nothing about clocks, boxes, canvases or audio. Everything app-specific lives in a schema and in the UI code that listens to `onStateChange`.
@@ -39,12 +39,12 @@ The engine knows nothing about clocks, boxes, canvases or audio. Everything app-
 | Deterministic transitions | `engine.send('START')` |
 | Guards | `guard(context, payload)` on a transition |
 | **Probabilistic branching** | several transitions on the same event with `probability` weights |
-| Lifecycle hooks | `onEnter` / `onExit`, plus transition `action` |
+| Lifecycle hooks | `onEnter` / `onExit`, plus a transition `action` |
 | Timeouts | `timeout: { durationMs, targetState }`, cleared when another event intervenes |
 | Observation | `onStateChange(listener)` and a built-in `history` |
 | **0-Bit persistence** | `toHashString()` / `FsmEngine.fromHashString(schema, hash)` |
 
-The 50/50 outcome in the Jack-in-the-Box is not `Math.random()` in the UI. It is two transitions on `POP`, each weighted `0.5`:
+The 50/50 outcome is not `Math.random()` in the UI. It is two transitions on `POP`, each weighted `0.5`:
 
 ```js
 READY_TO_POP: {
@@ -60,25 +60,27 @@ READY_TO_POP: {
 
 ## App 1: Neon Focus Clock
 
-A 25 minute focus timer rendered as a 360×360 Canvas 2D neon ring.
+A 25 minute focus timer drawn on a 360×360 Canvas 2D neon ring.
 
-- The arc drains with the remaining time and glows in several blur passes.
-- While `FOCUSING` the ring breathes with a sine pulse, and an oscilloscope waveform runs underneath. It flattens on `PAUSED` and turns emerald on `BREAK`.
+- The arc drains with the remaining time and glows in three blur passes.
+- While `FOCUSING` the ring breathes with a sine pulse (`0.8 + 0.2·sin(3t)`) and an oscilloscope waveform with cybernetic spikes runs underneath. It flattens on `PAUSED` and turns emerald on `BREAK`.
 - A tick sounds every second, and a chime plays when the session expires.
 - Events: `START`, `PAUSE`, `RESUME`, `EXPIRE`, `RESET`.
 
 ## App 2: Halloween Jack-in-the-Box
 
-A procedurally drawn mechanical music box (no image assets).
+A procedurally drawn mechanical music box. No image assets.
 
-- Each crank advances the FSM one tension level. The crank spins faster and the box shakes harder (±2, ±5, ±8 px). Seams glow and leak light at `READY_TO_POP`.
-- **Treat:** a glowing pumpkin springs out, 90 candy confetti and 40 gold sparks burst, and a harmonic C-E-G chime plays.
-- **Trick:** a phantom lunges at the camera, with red lightning, glitch slices, embers, a low screech and a screen shake.
+- Each crank advances the FSM one tension level. The crank spins faster and the box shakes harder (±2, ±5, ±8 px). Seams puff smoke at `WINDING_2` and leak light beams at `READY_TO_POP`.
+- **Treat:** the lid springs open, a glowing pumpkin rides up on a coil, 90 candy confetti and 40 gold sparks burst, and a C-E-G chime plays.
+- **Trick:** a phantom lunges at the camera with red lightning, glitch slices, embers, a low screech and a screen shake.
 - Winding states time out back to `IDLE` after 15 seconds.
 
 ## Live FSM Node Graph
 
-Below both apps, a canvas draws the **active schema** as nodes and edges. The current state has a pulsing neon halo, and every transition sends an energy packet along its edge, labelled with the event. It is generated from the same schema objects the engine runs, so it shows the engine at work rather than a mock-up.
+Below both apps, a canvas draws the **active schema** as nodes and edges. The current state has a pulsing neon halo and a rotating ring, and every transition sends an energy packet along its edge labelled with the event. The graph is generated from the same schema objects the engine runs, so it shows the engine at work rather than a mock-up.
+
+All three canvases share one `requestAnimationFrame` loop. A small readout under the graph shows live FPS and particle count.
 
 ---
 
@@ -90,35 +92,57 @@ No backend, no storage, no accounts. The full machine state travels in the URL:
 index.html#app=box&d=<base64 snapshot>
 ```
 
-`toHashString()` serializes `{ state, context, timestamp }` to base64. On every transition the page writes it to `location.hash`. On load, `fromHashString()` restores the machine, and the page reopens on the right tab. Copy the link mid-crank and the recipient lands on the same tension level. If the hash is invalid, the engine falls back to a fresh machine.
+`toHashString()` serializes `{ state, context, timestamp }` to base64. On every transition the page writes it to `location.hash`. On load, `fromHashString()` restores the machine and the page reopens on the right tab. Copy the link mid-crank and the recipient lands on the same tension level. An invalid hash falls back to a fresh machine.
 
 ---
 
-## Built with Kiro: Spec-Driven Development
+## Built with Kiro
 
-The project was driven by specs under [`.kiro/specs/chrono-fsm/`](.kiro/specs/chrono-fsm):
+This project uses three Kiro features together.
+
+### 1. Specs: spec-driven development
+
+Everything started as a spec under [`.kiro/specs/chrono-fsm/`](.kiro/specs/chrono-fsm):
 
 | File | Role |
 | --- | --- |
 | [`requirements.md`](.kiro/specs/chrono-fsm/requirements.md) | EARS requirements (`REQ-CORE`, `REQ-CLK`, `REQ-BOX`, `REQ-SYS`) |
-| [`design.md`](.kiro/specs/chrono-fsm/design.md) | Architecture diagram and the two FSM schemas |
+| [`design.md`](.kiro/specs/chrono-fsm/design.md) | Architecture diagram and both FSM schemas |
 | [`tasks.md`](.kiro/specs/chrono-fsm/tasks.md) | Checklist the agent worked through and ticked off |
 | [`visual-polish-spec.md`](.kiro/specs/chrono-fsm/visual-polish-spec.md) | Canvas 2D rendering spec for the second pass |
 
-The loop: write the requirement, design the schema, implement a task, run `node tests/verify_chrono.js`, tick the checkbox. The verifier is the gate for each task.
+The loop: write the requirement, design the schema, implement a task, run `node tests/verify_chrono.js`, tick the checkbox. The verifier gates every task.
+
+### 2. Steering: project rules the agent always follows
+
+In [`.kiro/steering/`](.kiro/steering):
+
+- [`project-overview.md`](.kiro/steering/project-overview.md) is always loaded. It states the headline claim, the file layout and the conventions.
+- [`engine-rules.md`](.kiro/steering/engine-rules.md) loads when files in `src/core/` are involved. It forbids app-specific logic in the engine and keeps the `.ts` twin in sync with the `.js` source of truth.
+
+### 3. Hooks: automation around the engine
+
+In [`.kiro/hooks/`](.kiro/hooks):
+
+- **Verify Chrono-FSM** is a manual hook. One click runs the verifier and summarizes the result. It was run in the IDE and all 20 checks passed.
+- **Engine Sync Check** fires when `fsm-engine.js` is saved. It asks the agent to mirror the change into `fsm-engine.ts`, rerun the verifier and flag anything that breaks the zero-modification promise.
 
 ---
 
 ## Run It
 
-ES modules need HTTP, so opening `index.html` via `file://` won't work.
+ES modules need HTTP, so opening `index.html` through `file://` will not work.
 
 ```bash
-npm start            # serves on http://127.0.0.1:8089
+npm start            # serves on http://127.0.0.1:8089 (set PORT to change)
 npm test             # node tests/verify_chrono.js
 ```
 
 Any static server works too (`python -m http.server`, `npx serve .`). Audio starts after your first click, tap or key press, as browsers require.
+
+### Deploy to GitHub Pages
+
+[`.github/workflows/pages.yml`](.github/workflows/pages.yml) runs the verifier and then publishes `index.html` and `src/` on every push to `main`. In the repository, open **Settings → Pages** and set **Source** to **GitHub Actions** once.
 
 ## Project Layout
 
@@ -126,15 +150,19 @@ Any static server works too (`python -m http.server`, `npx serve .`). Audio star
 index.html                 both apps, canvas renderers, graph, audio, hash sync
 src/core/fsm-engine.js     the engine (runtime source of truth)
 src/core/fsm-engine.ts     typed twin with identical logic and API
-tests/verify_chrono.js     engine unit checks and structural invariants
+tests/verify_chrono.js     engine checks and structural invariants
+serve.js                   local static server for `npm start`
 .kiro/specs/chrono-fsm/    requirements, design, tasks, visual spec
+.kiro/steering/            always-on and file-scoped project rules
+.kiro/hooks/               manual verify hook and engine sync hook
+.github/workflows/         CI verify + GitHub Pages deploy
 ```
 
 ## Verification
 
-`tests/verify_chrono.js` checks the engine (50/50 distribution over 200 trials, hash round-trip) and static invariants of `index.html` (engine import, both apps, canvases, animation loop). It does not drive a browser, so the visuals and audio were checked by hand.
+`tests/verify_chrono.js` runs 20 checks: engine file presence, 50/50 distribution over 200 trials, hash round-trip, and static invariants of `index.html` (engine import, both apps, all three canvases, the animation loop, particles, neon blur and waveform). It does not drive a browser, so the visuals and audio were checked by hand in the browser.
 
-Requires Node 22+ (the verifier `require()`s the ESM engine file).
+Verified on Node 24. The verifier `require()`s the ESM engine file, which needs a Node version with `require(esm)` support (22.12 or newer).
 
 ## License
 
