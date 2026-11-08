@@ -119,6 +119,7 @@ In [`.kiro/steering/`](.kiro/steering):
 
 - [`project-overview.md`](.kiro/steering/project-overview.md) is always loaded. It states the headline claim, the file layout and the conventions.
 - [`engine-rules.md`](.kiro/steering/engine-rules.md) loads when files in `src/core/` are involved. It forbids app-specific logic in the engine and keeps the `.ts` twin in sync with the `.js` source of truth.
+- [`verify-chrono.md`](.kiro/steering/verify-chrono.md) is a manual entry that Kiro generated when the verify hook was run from the IDE.
 
 ### 3. Hooks: automation around the engine
 
