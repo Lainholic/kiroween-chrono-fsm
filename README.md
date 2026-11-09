@@ -209,4 +209,4 @@ Verified on Node 24. The verifier `require()`s the ESM engine file, which needs 
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
