@@ -1,34 +1,40 @@
-# Chrono-FSM: One Core, Three Apps
+# Chrono-FSM: One Core, Four Apps
 
-> Submission text for Kiroween 2026, Skeleton Crew track. The numbers below match this repository.
+> Submission text for Kiroween 2026 (Skeleton Crew & Resurrection Track). The numbers below match this repository.
 
 ## Tagline
 
-One pure finite state machine engine, about 150 lines with no imports, driving a neon focus timer, a Halloween jack-in-the-box and a haunted vending machine with zero engine modifications.
+One pure finite state machine engine, about 150 lines with no imports, driving four distinct applications — a neon focus timer, a Halloween jack-in-the-box, a haunted vending machine, and PARK.EXE (a 1980s DOS disk utility reimagined as an interactive miniature pixel office) — with zero engine modifications.
 
 ## Links
 
-- Live demo: https://lainholic.github.io/kiroween-chrono-fsm/
+- Live demo (Chrono-FSM): https://lainholic.github.io/kiroween-chrono-fsm/
+- Live demo (PARK.EXE): https://lainholic.github.io/kiroween-chrono-fsm/park.html
 - Source code: https://github.com/Lainholic/kiroween-chrono-fsm
-- Demo video: https://youtu.be/vLiqAHuznxU
+- Demo video (Chrono-FSM): https://youtu.be/vLiqAHuznxU
+- Demo video (PARK.EXE): file:///C:/Users/USER/Desktop/PARK_EXE_DEMO_FINAL.mp4
 - Public Blog Post (Bonus): https://blog.naver.com/lvalways/224469509777
 - Social Post (X): https://x.com/LainHolic/status/2119406087820714488
 
 ## Inspiration
 
-The Skeleton Crew track asks for a clean, flexible skeleton that proves its versatility by powering distinct applications. A finite state machine is the most honest skeleton we could think of. Timers, game props and vending machines all look different, but underneath they are the same thing: states, events, rules about which events are allowed, and sometimes a dice roll.
+The Skeleton Crew track asks for a clean, flexible skeleton that proves its versatility by powering distinct applications. A finite state machine is the most honest skeleton we could think of. Timers, game props, vending machines, and multi-agent office simulations all look different, but underneath they are the same thing: states, events, rules about which events are allowed, and sometimes a dice roll.
+
+For the Resurrection track, we resurrected PARK.EXE — the 1980s MS-DOS disk utility that parked magnetic disk drive read/write heads before powerdown — as an interactive retro CRT monitor office simulation where agents park their tasks.
 
 So we set ourselves one rule: build the engine once, then build different apps on top of it without ever editing the engine again.
 
 ## What it does
 
-Three apps share one engine file, `src/core/fsm-engine.js`. Each app is only a schema (a plain object describing states and transitions) plus a UI that listens to state changes.
+Four apps share one engine file, `src/core/fsm-engine.js`. Each app is only a schema (a plain object describing states and transitions) plus a UI that listens to state changes.
 
 **App 1: Neon Focus Clock.** A 25 minute focus timer on a Canvas 2D neon arc gauge. The ring breathes while you focus, an oscilloscope waveform runs underneath, and a chime plays when the session ends. States: `IDLE`, `FOCUSING`, `PAUSED`, `BREAK`.
 
 **App 2: Halloween Jack-in-the-Box.** Crank the handle three times to build tension, then pull the trigger. The outcome is a true 50/50 branch decided by the engine: a pumpkin with a candy confetti burst (Treat), or a lunging phantom with lightning, glitch and screen shake (Trick).
 
 **App 3: Haunted Vending Machine.** Insert two coins, pick a slot, and the engine rolls 60% dispense, 25% jam, 15% haunted. Selecting without enough credit is rejected by an engine guard. A jammed machine can be kicked, which frees the item 40% of the time and otherwise loops back to jammed.
+
+**App 4: PARK.EXE (Resurrection Track).** A recreation of the 1980s DOS PARK utility rebooted as an interactive retro CRT office ("PARK-TRON 8088"). Four 16x16 pixel miniature agents run simultaneously: the Boss reviews PR proposals, the Junior Developer in an orange hoodie nervously submits code, the Copier Runner prints in teal, and the Coffee Bot delivers fresh espresso. The CRT features authentic scanlines, screen curvature, and interactive power controls.
 
 Below the apps, a **live FSM node graph** draws the active schema as nodes and edges, haloes the current state and sends an energy packet along each transition. It is generated from the same schema objects the engine runs.
 
@@ -43,9 +49,9 @@ Below the apps, a **live FSM node graph** draws the active schema as nodes and e
 **Built with Kiro.** We used three Kiro features together:
 - **Specs:** requirements in EARS format, a design document with the three FSM schemas, and a task list the agent worked through and ticked off. App 3 followed the same loop: requirements and schema design first, implementation second.
 - **Steering:** a project overview that is always loaded and an engine rules file scoped to `src/core/`, which forbids app-specific logic in the engine. A manual steering entry mirroring the verify hook also appeared in `.kiro/steering/` after we ran that hook from the IDE.
-- **Hooks:** a manual "Verify Chrono-FSM" hook that runs the verifier (we ran it from the IDE), and an "Engine Sync Check" hook that is set to fire when the engine file is saved.
+- **Hooks:** Chrono-FSM verifier hooks and 4 dedicated PARK lifecycle hooks (`.kiro/hooks/park-engine-guard.json`, `park-run-all-tests.json`, `park-save-verify.json`, `park-structure-audit.json`) that enforce zero engine modifications and verify park module integrity.
 
-**Verification.** `tests/verify_chrono.js` runs 31 checks. Eleven of them cover App 3. Most extract the vending schema from `index.html` and run it on the real engine: guard rejections, the 60/25/15 distribution over 600 trials, recovery by kicking, the timeout configuration and the hash round trip. One check confirms the engine file contains no clock, box, vending, canvas or audio code. A GitHub Actions workflow runs the verifier before every deploy to GitHub Pages.
+**Verification.** `tests/verify_chrono.js` (31 checks) and `tests/verify_park.js` (21 checks) run a combined 52 checks (100% PASS). They verify guard rejections, the 60/25/15 distribution over 600 trials, recovery by kicking, timeout configurations, hash round trips, and strictly ensure that the shared core engine file contains zero app-specific code. A GitHub Actions workflow runs the full suite before every deploy to GitHub Pages.
 
 ## Challenges we ran into
 
