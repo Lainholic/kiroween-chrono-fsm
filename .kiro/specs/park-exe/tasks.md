@@ -342,6 +342,11 @@ PARK.EXE는 공유 엔진 `src/core/fsm-engine.js`를 수정 없이 재사용하
     - `src/park/sprites.js` newbie 팔레트: 1 아웃라인 #1f1a17, 3 머리색 #5c3d2e, 4 셔츠 #f97316. 관련 주석 동기화, verify_park.js 21개 통과 유지
     - _Requirements: 4.1, 4.2_
 
+- [x] 17. 복사기 담당 스프라이트 색 분리
+  - [x] 17.1 copier 셔츠를 청록색으로 변경해 주니어 개발자 주황 후드티와 구분
+    - `src/park/sprites.js` copier 팔레트 4 셔츠: #f59e0b -> #14b8a6 (teal). 주석 동기화, verify_park.js 21개 통과 유지
+    - _Requirements: 4.1, 4.2_
+
 ## Notes
 
 - `*`가 붙은 sub-task는 선택 사항이며 빠른 MVP를 위해 건너뛸 수 있다. 건너뛰어도 Verifier(6.5)가 핵심 불변식을 시드 고정으로 검사한다.
@@ -364,7 +369,8 @@ PARK.EXE는 공유 엔진 `src/core/fsm-engine.js`를 수정 없이 재사용하
     { "id": 6, "tasks": ["12.4"] },
     { "id": 7, "tasks": ["14.1", "14.2", "14.3"] },
     { "id": 8, "tasks": ["15.1"] },
-    { "id": 9, "tasks": ["16.1"] }
+    { "id": 9, "tasks": ["16.1"] },
+    { "id": 10, "tasks": ["17.1"] }
   ]
 }
 ```

@@ -85,7 +85,7 @@ const NEWBIE_B = [
 ];
 
 // ---------------------------------------------------------------- Copier runner
-// Red cap, orange shirt, hugging a stack of paper while running.
+// Red cap, teal shirt, hugging a stack of paper while running.
 const COPIER_A = [
   '0000011111000000',
   '0000133333100000',
@@ -176,7 +176,7 @@ export const SPRITES = Object.freeze({
   }),
   copier: Object.freeze({
     // 0 clear, 1 outline, 2 skin, 3 cap, 4 shirt, 5 paper, 6 pants, 7 shoes
-    palette: Object.freeze(['transparent', '#1f2937', '#fbbf77', '#ef4444', '#f59e0b', '#f5f5f4', '#374151', '#111827']),
+    palette: Object.freeze(['transparent', '#1f2937', '#fbbf77', '#ef4444', '#14b8a6', '#f5f5f4', '#374151', '#111827']),
     frames: Object.freeze([Object.freeze(COPIER_A), Object.freeze(COPIER_B)])
   }),
   coffee: Object.freeze({

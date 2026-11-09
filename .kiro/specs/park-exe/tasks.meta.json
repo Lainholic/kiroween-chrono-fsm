@@ -635,6 +635,30 @@
         "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
         "timestamp": 1794209223061
       }
+    ],
+    "17.1 copier 셔츠를 청록색으로 변경해 주니어 개발자 주황 후드티와 구분": [
+      {
+        "executionId": "4859bb5d-5fb1-4e17-b2ae-304a20a5cf2f",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794209786597
+      },
+      {
+        "executionId": "4859bb5d-5fb1-4e17-b2ae-304a20a5cf2f",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794209790270
+      },
+      {
+        "executionId": "4859bb5d-5fb1-4e17-b2ae-304a20a5cf2f",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794209828117
+      }
+    ],
+    "17. 복사기 담당 스프라이트 색 분리": [
+      {
+        "executionId": "4859bb5d-5fb1-4e17-b2ae-304a20a5cf2f",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794209828214
+      }
     ]
   }
 }
