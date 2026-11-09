@@ -1,0 +1,13 @@
+{
+  "name": "PARK.EXE Save Verify",
+  "version": "1.0.0",
+  "description": "When PARK.EXE sources or park.html are edited, run the PARK verifier and report the summary.",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["src/park/**", "park.html"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A PARK.EXE file was just edited. Run `node tests/verify_park.js` from the project root. Report total, PASS and FAIL counts from the `SUMMARY` line. If anything fails, list the failed check names and the suspect file paths. Suggest editing src/core/fsm-engine.js only if the engine itself is proven defective; otherwise fix the app code under src/park or park.html."
+  }
+}

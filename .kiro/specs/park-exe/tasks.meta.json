@@ -1,0 +1,534 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 fast-check devDependency 설치 (exact 고정)": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153818814
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153827106
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153872739
+      }
+    ],
+    "1.2 `src/park/constants.js`, `src/park/rng.js`, `src/park/package.json` 작성": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153818896
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153827797
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153872837
+      }
+    ],
+    "1.3 `src/park/scene-math.js` 구현": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153818939
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153878837
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154009383
+      }
+    ],
+    "2.1 `src/park/sprites.js` 구현": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153818973
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153878890
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154009517
+      }
+    ],
+    "3.1 `src/park/bubbles.js` 구현": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819041
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153878991
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154009700
+      }
+    ],
+    "3.3 `src/park/loop.js` 구현": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819073
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153879466
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154010518
+      }
+    ],
+    "3.5 `src/park/boot.js` 구현": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819105
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153879857
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154011021
+      }
+    ],
+    "3.9 `src/park/audio-plan.js` 구현": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819147
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154014539
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154116387
+      }
+    ],
+    "4.1 `src/park/schemas.js` 구현": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819184
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154015052
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154116728
+      }
+    ],
+    "4.8 `src/park/sim.js` 구현": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819226
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154120992
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154203140
+      }
+    ],
+    "5. Checkpoint - 순수 모듈 검증": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819277
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154621276
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154649068
+      }
+    ],
+    "6.1 `tests/lib/report.js` 구현": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819310
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154015840
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154116576
+      }
+    ],
+    "6.3 `tests/lib/engine-normalize.js` 구현": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819349
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154016323
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154117535
+      }
+    ],
+    "6.5 `tests/verify_park.js` 작성 (완성된 모듈 대상 검사)": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819394
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154208932
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154318458
+      }
+    ],
+    "7. Checkpoint - Verifier 통과 확인": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819433
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154654574
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154679677
+      }
+    ],
+    "8.1 Kiro hook 4개 작성": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819472
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154323318
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154513629
+      }
+    ],
+    "8.2 `tests/run_all.js` 작성": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819530
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154323408
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154513727
+      }
+    ],
+    "9.1 `src/park/audio.js` 구현": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819581
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154121320
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154203741
+      }
+    ],
+    "9.4 Verifier에 오디오 검사 추가": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819623
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154324034
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154513879
+      }
+    ],
+    "10.1 `src/park/render.js` 구현": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819676
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154209049
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154318736
+      }
+    ],
+    "11.1 `src/park/main.js` 구현": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819715
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154324651
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154513966
+      }
+    ],
+    "11.2 `park.html` 작성": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819755
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154518457
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154568774
+      }
+    ],
+    "12.1 `index.html`에 `park.html` 링크 추가": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819792
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154518949
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154568643
+      }
+    ],
+    "12.2 `package.json` scripts 추가": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819867
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154519770
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154568945
+      }
+    ],
+    "12.3 `.github/workflows/pages.yml` 수정": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819905
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154520355
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154569020
+      }
+    ],
+    "12.4 Verifier에 파일 구성과 hooks 검사 추가": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819942
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154573559
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154616163
+      }
+    ],
+    "13. Final checkpoint - 전체 검증": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794153819983
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154683155
+      },
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154733310
+      }
+    ],
+    "1. 프로젝트 기반과 화면 수식 모듈": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154009432
+      }
+    ],
+    "2. Sprite 데이터와 디코딩": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154009559
+      }
+    ],
+    "3. 말풍선, 루프, Boot 모델, Seek_Sound 계획": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154116470
+      }
+    ],
+    "4. Agent 스키마와 시뮬레이션": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154203218
+      }
+    ],
+    "6. Verifier와 엔진 무결성 검사": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154318518
+      }
+    ],
+    "10. Renderer": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154318781
+      }
+    ],
+    "8. Kiro hooks와 통합 테스트 러너": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154513767
+      }
+    ],
+    "9. Audio 엔진": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154513911
+      }
+    ],
+    "11. 앱 연결과 진입점": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154568827
+      }
+    ],
+    "12. 기존 파일 연결과 최종 검사": [
+      {
+        "executionId": "68e25d8e-96f9-4ea4-9f92-9bf09c9473c5",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794154616348
+      }
+    ]
+  }
+}

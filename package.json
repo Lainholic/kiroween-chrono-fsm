@@ -4,7 +4,9 @@
   "description": "Zero-dependency executable-spec FSM foundation powering three distinct applications for Kiroween 2026 (Skeleton Crew)",
   "main": "index.html",
   "scripts": {
-    "test": "node tests/verify_chrono.js",
+    "test": "node tests/run_all.js",
+    "test:park": "node tests/verify_park.js",
+    "test:prop": "node --test tests/props/",
     "start": "node serve.js"
   },
   "keywords": [
@@ -15,5 +17,8 @@
     "kiroween"
   ],
   "author": "muzikinlife",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "fast-check": "4.10.2"
+  }
 }

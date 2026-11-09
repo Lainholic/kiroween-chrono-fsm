@@ -24,6 +24,8 @@ jobs:
           node-version: 24
       - name: Run Chrono-FSM verifier
         run: node tests/verify_chrono.js
+      - name: Run park.exe verifier
+        run: node tests/verify_park.js
 
   deploy:
     needs: verify
@@ -37,6 +39,7 @@ jobs:
         run: |
           mkdir _site
           cp index.html _site/
+          cp park.html _site/
           cp -r src _site/src
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

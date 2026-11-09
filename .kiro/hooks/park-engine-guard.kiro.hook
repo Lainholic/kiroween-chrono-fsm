@@ -1,0 +1,13 @@
+{
+  "name": "PARK.EXE Engine Guard",
+  "version": "1.0.0",
+  "description": "Warn when the shared FSM engine is touched and re-check hash, twin and the full test suite.",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["src/core/fsm-engine.js", "src/core/fsm-engine.ts"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "WARNING: the shared engine no-modification principle may be violated. Name the changed file (src/core/fsm-engine.js or src/core/fsm-engine.ts). Then run `npm test` and report separately: 1) [engine:hash] match or mismatch, 2) [engine:twin] match or mismatch, 3) `npm test` overall pass or fail. The headline claim is ZERO engine modifications across all apps, so flag any app-specific logic added to the engine."
+  }
+}

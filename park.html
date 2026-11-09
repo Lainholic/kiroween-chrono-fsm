@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PARK.EXE</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+    #park-canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      background: #000;
+    }
+    #park-error {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      margin: 0;
+      padding: 16px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 14px;
+      color: #33ff66;
+      background: #000;
+      white-space: pre-wrap;
+      z-index: 10;
+    }
+    #park-error[hidden] { display: none; }
+    noscript {
+      position: fixed;
+      top: 0;
+      left: 0;
+      padding: 16px;
+      font-family: "Courier New", Courier, monospace;
+      color: #ffb000;
+    }
+  </style>
+</head>
+<body>
+  <noscript>PARK.EXE requires JavaScript. Please enable it and reload.</noscript>
+  <pre id="park-error" hidden></pre>
+  <canvas id="park-canvas"></canvas>
+  <script type="module">
+    const MODULES = ['constants', 'rng', 'sprites', 'schemas', 'bubbles', 'sim', 'loop', 'boot',
+                     'audio-plan', 'scene-math', 'audio', 'render', 'main']
+      .map((n) => `./src/park/${n}.js`)
+      .concat(['./src/core/fsm-engine.js']);
+
+    import('./src/park/main.js').catch(async (err) => {
+      const failed = [];
+      for (const path of MODULES) {
+        try {
+          await import(path);
+        } catch (e) {
+          failed.push(path);
+          console.error('[PARK] module load failed:', path, e);
+        }
+      }
+      const box = document.getElementById('park-error');
+      box.hidden = false;
+      box.textContent = 'PARK.EXE: module load failed\n' + (failed.join('\n') || String(err));
+    });
+  </script>
+</body>
+</html>

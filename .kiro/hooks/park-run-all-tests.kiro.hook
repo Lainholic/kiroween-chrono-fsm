@@ -1,0 +1,12 @@
+{
+  "name": "Run All Tests (Chrono-FSM + PARK.EXE)",
+  "version": "1.0.0",
+  "description": "Manual button: run npm test once and summarize both verifiers separately.",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Run `npm test` once from the project root. Summarize the Chrono-FSM output and the PARK.EXE output separately, each with its PASS and FAIL counts. If anything fails, name the failed checks."
+  }
+}

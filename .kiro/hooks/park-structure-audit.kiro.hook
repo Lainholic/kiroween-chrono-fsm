@@ -1,0 +1,12 @@
+{
+  "name": "PARK.EXE Structure Audit",
+  "version": "1.0.0",
+  "description": "Manual button: run the PARK verifier and report the structural audit items.",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Run `node tests/verify_park.js` from the project root. From its output, report each of [audit:sprite], [audit:probability] and [audit:audio-gesture] individually as PASS or FAIL, with a short reason for any FAIL."
+  }
+}
