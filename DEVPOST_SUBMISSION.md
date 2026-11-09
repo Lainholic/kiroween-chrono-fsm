@@ -12,7 +12,7 @@ One pure finite state machine engine, about 150 lines with no imports, driving f
 - Live demo (PARK.EXE): https://lainholic.github.io/kiroween-chrono-fsm/park.html
 - Source code: https://github.com/Lainholic/kiroween-chrono-fsm
 - Demo video (Chrono-FSM): https://youtu.be/vLiqAHuznxU
-- Demo video (PARK.EXE): file:///C:/Users/USER/Desktop/PARK_EXE_DEMO_FINAL.mp4
+- Demo video (PARK.EXE): https://youtu.be/yNSFsaerMOE
 - Public Blog Post (Bonus): https://blog.naver.com/lvalways/224469509777
 - Social Post (X): https://x.com/LainHolic/status/2119406087820714488
 
