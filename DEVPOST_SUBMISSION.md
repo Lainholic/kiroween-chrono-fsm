@@ -4,7 +4,7 @@
 
 ## Tagline
 
-One pure finite state machine engine, about 150 lines and zero dependencies, driving a neon focus timer, a Halloween jack-in-the-box and a haunted vending machine with zero engine modifications.
+One pure finite state machine engine, about 150 lines with no imports, driving a neon focus timer, a Halloween jack-in-the-box and a haunted vending machine with zero engine modifications.
 
 ## Links
 
@@ -36,7 +36,7 @@ Below the apps, a **live FSM node graph** draws the active schema as nodes and e
 
 ## How we built it
 
-**The engine.** A zero-dependency ES module with deterministic transitions, guards, lifecycle hooks, state timeouts, weighted probabilistic branching, a state history, and base64 snapshot save and restore. A typed TypeScript twin (`fsm-engine.ts`) keeps identical runtime logic.
+**The engine.** An ES module with no imports with deterministic transitions, guards, lifecycle hooks, state timeouts, weighted probabilistic branching, a state history, and base64 snapshot save and restore. A typed TypeScript twin (`fsm-engine.ts`) keeps identical runtime logic.
 
 **The apps.** Everything is hand-written Canvas 2D and the Web Audio API: no frameworks, no image assets, no audio files. Four canvases share one `requestAnimationFrame` loop with a shared particle system. Sound is synthesized with oscillators, and the audio context only starts after the first user gesture.
 

@@ -1,5 +1,5 @@
 'use strict';
-// Pure helpers for the PARK.EXE verifier output. No I/O, no dependencies.
+// Pure helpers for the PARK.EXE verifier output. No I/O, no imports.
 
 function clean(value) {
   let s;

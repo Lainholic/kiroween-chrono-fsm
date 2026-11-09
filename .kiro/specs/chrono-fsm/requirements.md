@@ -1,7 +1,7 @@
 # Requirements: Chrono-FSM (Skeleton Crew Track)
 
 ## 1. Executive Summary & Concept
-- **Goal**: Demonstrate that a single, zero-dependency Finite State Machine core (`src/core/fsm-engine.js` / `fsm-engine.ts`) can cleanly power two radically different applications without any modification to the engine logic.
+- **Goal**: Demonstrate that a single Finite State Machine core with zero external runtime dependencies (pure vanilla JS, Canvas 2D, Web Audio API) (`src/core/fsm-engine.js` / `fsm-engine.ts`) can cleanly power two radically different applications without any modification to the engine logic.
 - **Track**: Kiroween 2026 - Skeleton Crew ("Build a clean, flexible skeleton code template and demonstrate its versatility by powering two distinct applications").
 - **App 1**: **Neon Smart Focus Clock** (Productivity Pomodoro, deep work timer, break interval alert).
 - **App 2**: **Halloween Jack-in-the-Box** (Spooky crank music box, tension accumulation, 50/50 Treat or Trick pop trigger with jumpscare & treats).

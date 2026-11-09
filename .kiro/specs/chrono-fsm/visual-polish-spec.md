@@ -66,4 +66,4 @@
 ## 4. Performance & Audio Integration
 - **Lock to 60 FPS**: Unified `requestAnimationFrame` loop driving clock, box, and FSM graph canvas contexts.
 - **Audio Synchronization**: Web Audio clicks, chimes, and screechers perfectly sync with particle burst triggers.
-- **Zero External Dependencies**: Pure native Canvas 2D and Web Audio API. Zero external image assets or heavy bundles.
+- **Zero external runtime dependencies**: Pure native Canvas 2D and Web Audio API. Zero external image assets or heavy bundles.

@@ -1,7 +1,7 @@
 # Chrono-FSM: One Core, Three Apps
 
 > **Kiroween 2026 · Skeleton Crew Track**
-> A zero-dependency, pure finite state machine engine driving three radically distinct apps with **ZERO engine modifications**.
+> A pure finite state machine engine with zero external runtime dependencies (pure vanilla JS, Canvas 2D, Web Audio API), driving three radically distinct apps with **ZERO engine modifications**.
 
 **Live demo:** https://lainholic.github.io/kiroween-chrono-fsm/  
 **Demo video:** https://youtu.be/vLiqAHuznxU

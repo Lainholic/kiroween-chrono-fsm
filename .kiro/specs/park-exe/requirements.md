@@ -2,9 +2,9 @@
 
 ## Introduction
 
-PARK.EXE는 1980년대 MS-DOS의 하드디스크 헤드 파킹 유틸리티 PARK.EXE를 부활(Resurrection)시킨 웹 앱이다. 사용자가 DOS 프롬프트에서 `PARK` 명령을 실행하면 절차적으로 합성된 HDD 헤드 파킹 시크 사운드가 재생되고, 화면이 레트로 CRT 뷰로 전환되어 Lemmings 스타일의 사무실 시뮬레이션 스크린세이버가 실행된다. 스크린세이버에는 16x16 픽셀아트 에이전트 4종(Boss, Newbie Lemming, Copier Runner, Coffee Bot)과 오브젝트 4종(boss desk, copier, water cooler, server rack)이 등장한다.
+PARK.EXE는 1980년대 MS-DOS의 하드디스크 헤드 파킹 유틸리티 PARK.EXE를 부활(Resurrection)시킨 웹 앱이다. 사용자가 DOS 프롬프트에서 `PARK` 명령을 실행하면 절차적으로 합성된 HDD 헤드 파킹 시크 사운드가 재생되고, 화면이 레트로 CRT 뷰로 전환되어 레트로 미니어처 픽셀 에이전트 스타일의 사무실 시뮬레이션 스크린세이버가 실행된다. 스크린세이버에는 16x16 픽셀아트 에이전트 4종(Boss, Junior Developer, Copier Runner, Coffee Bot)과 오브젝트 4종(boss desk, copier, water cooler, server rack)이 등장한다.
 
-앱은 기존 Chrono-FSM의 공유 엔진 `src/core/fsm-engine.js`를 수정 없이 재사용한다. 앱은 별도 진입점 `park.html`과 전용 모듈, 전용 verifier(`tests/verify_park.js`)로 추가되며 기존 3개 앱(Neon Focus Clock, Jack-in-the-Box, Haunted Vending Machine)과 `npm test`를 깨뜨리지 않는다. 외부 의존성과 이미지 에셋은 없고 Canvas 2D와 Web Audio만 사용한다. 자동 검증 파이프라인은 `.kiro/hooks/`의 Kiro hooks로 정의한다.
+앱은 기존 Chrono-FSM의 공유 엔진 `src/core/fsm-engine.js`를 수정 없이 재사용한다. 앱은 별도 진입점 `park.html`과 전용 모듈, 전용 verifier(`tests/verify_park.js`)로 추가되며 기존 3개 앱(Neon Focus Clock, Jack-in-the-Box, Haunted Vending Machine)과 `npm test`를 깨뜨리지 않는다. 외부 런타임 의존성 0 (순수 바닐라 JS, Canvas 2D, Web Audio API)이며 이미지 에셋은 없다. 자동 검증 파이프라인은 `.kiro/hooks/`의 Kiro hooks로 정의한다.
 
 ## Glossary
 
@@ -17,11 +17,11 @@ PARK.EXE는 1980년대 MS-DOS의 하드디스크 헤드 파킹 유틸리티 PARK
 - **Seek_Sound**: HDD 헤드 파킹 시크를 모사하는 합성 사운드 (모터 스핀다운, 헤드 클릭, 파킹 래치 포함)
 - **Audio_Unlock**: 사용자 제스처(키 입력 또는 클릭) 이후에만 AudioContext를 생성/재개하는 절차
 - **CRT_View**: 스캔라인, 곡면 비네트, 인광 글로우를 적용한 레트로 CRT 렌더 화면
-- **Office_Scene**: CRT_View 안에서 실행되는 Lemmings 스타일 사무실 시뮬레이션 스크린세이버
+- **Office_Scene**: CRT_View 안에서 실행되는 레트로 미니어처 픽셀 에이전트 스타일 사무실 시뮬레이션 스크린세이버
 - **Renderer**: Canvas 2D로 Boot_Screen, Office_Scene, CRT_View를 그리는 모듈
-- **Agent**: Office_Scene의 16x16 픽셀아트 캐릭터. Boss, Newbie_Lemming, Copier_Runner, Coffee_Bot 중 하나
+- **Agent**: Office_Scene의 16x16 픽셀아트 캐릭터. Boss, Junior_Developer, Copier_Runner, Coffee_Bot 중 하나
 - **Boss**: 문서를 승인 또는 반려하는 Agent
-- **Newbie_Lemming**: 문서를 들고 Boss에게 걸어가는 Agent
+- **Junior_Developer**: 문서를 들고 Boss에게 걸어가는 Agent
 - **Copier_Runner**: 복사기에서 인쇄 루프를 반복하는 Agent
 - **Coffee_Bot**: water cooler 주변에서 커피를 나르는 Agent
 - **Sprite**: 문자열 팔레트 인덱스 배열로 코드에 정의된 16x16 픽셀아트 이미지
@@ -83,18 +83,18 @@ PARK.EXE는 1980년대 MS-DOS의 하드디스크 헤드 파킹 유틸리티 PARK
 
 ### Requirement 4: 16x16 픽셀아트 Agent와 걷기 애니메이션
 
-**User Story:** As a 방문자, I want 네 종류의 귀여운 16x16 캐릭터가 뒤뚱뒤뚱 걷는 모습을 보고 싶다, so that Lemmings 스타일의 매력을 느낄 수 있다.
+**User Story:** As a 방문자, I want 네 종류의 귀여운 16x16 캐릭터가 뒤뚱뒤뚱 걷는 모습을 보고 싶다, so that 미니어처 픽셀 에이전트의 매력을 느낄 수 있다.
 
 #### Acceptance Criteria
 
-1. THE Park_App SHALL Boss, Newbie_Lemming, Copier_Runner, Coffee_Bot 네 종류의 Agent Sprite를 코드 내 문자열 팔레트 데이터로 정의한다
+1. THE Park_App SHALL Boss, Junior_Developer, Copier_Runner, Coffee_Bot 네 종류의 Agent Sprite를 코드 내 문자열 팔레트 데이터로 정의한다
 2. THE Park_App SHALL 각 Agent 종류마다 가로 16픽셀 x 세로 16픽셀의 Walk_Frame을 정확히 2개(Walk_Frame A, Walk_Frame B) 정의하며, 각 Walk_Frame은 정확히 256개(16x16)의 픽셀 값을 가진다
 3. THE Park_App SHALL 이미지 파일을 로드하지 않고 모든 Sprite를 Canvas 2D 픽셀 단위 렌더링으로 그린다
 4. WHILE Agent가 걷는 상태이면, THE Renderer SHALL 160ms(허용 오차 ±16ms) 간격으로 Walk_Frame A와 Walk_Frame B를 번갈아 표시한다
 5. WHILE Agent가 걷는 상태이면, THE Renderer SHALL Walk_Frame 전환 시마다 Agent의 y 좌표를 기준 위치 대비 Walk_Frame A에서는 0픽셀, Walk_Frame B에서는 -1픽셀로 오프셋하여 뒤뚱거림을 표현한다
 6. WHILE Agent의 이동 방향이 왼쪽이면, THE Renderer SHALL Sprite를 수평 반전하여 그리고, WHILE 이동 방향이 오른쪽이면 반전 없이 그린다
 7. WHILE Agent가 걷지 않는 상태이면, THE Renderer SHALL Walk_Frame A를 y 오프셋 0픽셀로 고정 표시한다
-8. THE Newbie_Lemming Sprite SHALL 문서를 든 모습을 포함하고, WHILE Newbie_Lemming이 문서를 들고 있지 않으면 THE Renderer SHALL 문서 픽셀을 그리지 않는다
+8. THE Junior_Developer Sprite SHALL 문서를 든 모습을 포함하고, WHILE Junior_Developer가 문서를 들고 있지 않으면 THE Renderer SHALL 문서 픽셀을 그리지 않는다
 9. IF Sprite 데이터에 정의되지 않은 팔레트 문자가 포함되어 있으면, THEN THE Renderer SHALL 해당 픽셀을 투명으로 처리하여 그리지 않고 나머지 픽셀의 렌더링을 계속한다
 
 ### Requirement 5: 사무실 오브젝트
@@ -127,27 +127,27 @@ PARK.EXE는 1980년대 MS-DOS의 하드디스크 헤드 파킹 유틸리티 PARK
 7. WHEN `npm test`가 실행되면, THE Park_App SHALL 기존 `tests/verify_chrono.js`의 모든 기존 검사를 변경 없이 실행하고, 그 결과가 park-exe 작업 이전과 동일하게 전부 통과(실패 0건)하게 한다
 8. THE Park_App SHALL 기존 `index.html`의 3개 앱(Neon Focus Clock, Halloween Jack-in-the-Box, Haunted Vending Machine)의 상태, 전이, 렌더링, 오디오 동작을 변경하지 않는다
 
-### Requirement 7: Newbie_Lemming과 Boss의 문서 승인/반려 FSM
+### Requirement 7: Junior_Developer와 Boss의 문서 승인/반려 FSM
 
 **User Story:** As a 방문자, I want 신입이 문서를 들고 보스에게 가서 승인 또는 반려되는 모습을 보고 싶다, so that 사무실 드라마를 즐길 수 있다.
 
 #### Acceptance Criteria
 
-1. THE Newbie_Lemming Agent_Schema SHALL IDLE, WALKING_TO_BOSS, SUBMITTING, APPROVED, REJECTED, RETURNING 상태를 정의한다
-2. WHEN Newbie_Lemming이 IDLE 상태에 진입한 뒤 4.0초 이상 8.0초 이하의 무작위 대기 시간이 경과하면, THE Newbie_Lemming SHALL 문서를 들고 WALKING_TO_BOSS 상태로 전이한다
-3. WHEN Newbie_Lemming이 WALKING_TO_BOSS 상태에서 boss desk 앞 도착 위치에 도달하면, THE Newbie_Lemming SHALL SUBMITTING 상태로 전이한다
-4. WHEN Newbie_Lemming이 SUBMITTING 상태에서 `REVIEW` 이벤트를 받으면, THE Agent_Schema SHALL 확률 0.70으로 APPROVED, 확률 0.30으로 REJECTED로 전이하는 두 transition을 가진다
-5. WHEN Newbie_Lemming이 APPROVED 상태에 진입하면, THE Speech_Bubble SHALL `APPROVED! 🎉` 텍스트를 표시한다
-6. WHEN Newbie_Lemming이 REJECTED 상태에 진입하면, THE Speech_Bubble SHALL `REJECTED?! 😭` 텍스트를 표시한다
-7. WHEN Newbie_Lemming이 APPROVED 상태에 진입하면, THE Copier_Runner SHALL 복사 작업 요청을 1회 받는다
-8. WHEN Newbie_Lemming이 APPROVED 또는 REJECTED 상태에 진입한 뒤 1.5초가 경과하면, THE Newbie_Lemming SHALL RETURNING 상태로 전이한다
-9. WHEN Newbie_Lemming이 RETURNING 상태에서 시작 위치에 도달하면, THE Newbie_Lemming SHALL IDLE 상태로 전이한다
+1. THE Junior_Developer Agent_Schema SHALL IDLE, WALKING_TO_BOSS, SUBMITTING, APPROVED, REJECTED, RETURNING 상태를 정의한다
+2. WHEN Junior_Developer가 IDLE 상태에 진입한 뒤 4.0초 이상 8.0초 이하의 무작위 대기 시간이 경과하면, THE Junior_Developer SHALL 문서를 들고 WALKING_TO_BOSS 상태로 전이한다
+3. WHEN Junior_Developer가 WALKING_TO_BOSS 상태에서 boss desk 앞 도착 위치에 도달하면, THE Junior_Developer SHALL SUBMITTING 상태로 전이한다
+4. WHEN Junior_Developer가 SUBMITTING 상태에서 `REVIEW` 이벤트를 받으면, THE Agent_Schema SHALL 확률 0.70으로 APPROVED, 확률 0.30으로 REJECTED로 전이하는 두 transition을 가진다
+5. WHEN Junior_Developer가 APPROVED 상태에 진입하면, THE Speech_Bubble SHALL `APPROVED! 🎉` 텍스트를 표시한다
+6. WHEN Junior_Developer가 REJECTED 상태에 진입하면, THE Speech_Bubble SHALL `REJECTED?! 😭` 텍스트를 표시한다
+7. WHEN Junior_Developer가 APPROVED 상태에 진입하면, THE Copier_Runner SHALL 복사 작업 요청을 1회 받는다
+8. WHEN Junior_Developer가 APPROVED 또는 REJECTED 상태에 진입한 뒤 1.5초가 경과하면, THE Junior_Developer SHALL RETURNING 상태로 전이한다
+9. WHEN Junior_Developer가 RETURNING 상태에서 시작 위치에 도달하면, THE Junior_Developer SHALL IDLE 상태로 전이한다
 10. FOR ALL 10,000회 반복 REVIEW 시뮬레이션에서, THE APPROVED 비율 SHALL 0.67 이상 0.73 이하이다
 11. THE Boss Agent_Schema SHALL IDLE, REVIEWING, STAMP_APPROVE, STAMP_REJECT 상태를 정의한다
-12. WHEN Newbie_Lemming이 SUBMITTING 상태에 진입하면, THE Boss SHALL REVIEWING 상태로 전이하고 1.0초 후 Newbie_Lemming에게 `REVIEW` 이벤트를 전달한다
-13. WHEN Newbie_Lemming이 APPROVED 상태에 진입하면, THE Boss SHALL STAMP_APPROVE 상태로 전이하고, WHEN Newbie_Lemming이 REJECTED 상태에 진입하면, THE Boss SHALL STAMP_REJECT 상태로 전이한다
-14. WHEN Newbie_Lemming이 RETURNING 상태에 진입하면, THE Boss SHALL IDLE 상태로 전이한다
-15. IF Newbie_Lemming이 SUBMITTING 이외의 상태에서 `REVIEW` 이벤트를 받으면, THEN THE Newbie_Lemming SHALL 현재 상태를 유지하고 해당 이벤트를 무시한다
+12. WHEN Junior_Developer가 SUBMITTING 상태에 진입하면, THE Boss SHALL REVIEWING 상태로 전이하고 1.0초 후 Junior_Developer에게 `REVIEW` 이벤트를 전달한다
+13. WHEN Junior_Developer가 APPROVED 상태에 진입하면, THE Boss SHALL STAMP_APPROVE 상태로 전이하고, WHEN Junior_Developer가 REJECTED 상태에 진입하면, THE Boss SHALL STAMP_REJECT 상태로 전이한다
+14. WHEN Junior_Developer가 RETURNING 상태에 진입하면, THE Boss SHALL IDLE 상태로 전이한다
+15. IF Junior_Developer가 SUBMITTING 이외의 상태에서 `REVIEW` 이벤트를 받으면, THEN THE Junior_Developer SHALL 현재 상태를 유지하고 해당 이벤트를 무시한다
 
 ### Requirement 8: Copier_Runner 인쇄 루프 FSM
 

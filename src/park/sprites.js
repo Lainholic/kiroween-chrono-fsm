@@ -45,7 +45,7 @@ const BOSS_B = [
   '0001110001110000'
 ];
 
-// ---------------------------------------------------------------- Newbie lemming
+// ---------------------------------------------------------------- Junior developer
 // Green spiky hair, blue shirt, holding a paper (index 5 = paper only).
 const NEWBIE_A = [
   '0000030303030000',

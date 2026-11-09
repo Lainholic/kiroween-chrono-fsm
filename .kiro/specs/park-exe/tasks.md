@@ -60,7 +60,7 @@ PARK.EXE는 공유 엔진 `src/core/fsm-engine.js`를 수정 없이 재사용하
 
 - [x] 2. Sprite 데이터와 디코딩
   - [x] 2.1 `src/park/sprites.js` 구현
-    - Boss, Newbie_Lemming, Copier_Runner, Coffee_Bot 각각 팔레트와 Walk_Frame A/B (16줄 x 16자, 16진 팔레트 인덱스 문자열)
+    - Boss, Junior_Developer, Copier_Runner, Coffee_Bot 각각 팔레트와 Walk_Frame A/B (16줄 x 16자, 16진 팔레트 인덱스 문자열)
     - Newbie는 `paperIndex`로 문서 픽셀 표시
     - `decodeSprite` (정의 밖 문자와 부족한 칸은 `-1`, 예외 없음), `visiblePixels`, `walkPose`
     - 이미지 파일 없이 코드 데이터로만 정의한다
@@ -332,6 +332,11 @@ PARK.EXE는 공유 엔진 `src/core/fsm-engine.js`를 수정 없이 재사용하
     - park.html에 4:3 베젤(둥근 모서리, 음영) 구성, main.js/render.js에서 devicePixelRatio 기준 정수 배율로 선명하게 렌더, `[static:bezel]` 검사 추가
     - _Requirements: 3.4, 3.5, 3.7_
 
+- [x] 15. 상표명 제거와 의존성 표현 정정
+  - [x] 15.1 상표명 제거와 'zero external runtime dependencies' 표현 정정
+    - .kiro/specs/park-exe 문서와 소스 주석에서 상표명 제거(해당 Agent 명칭을 Junior_Developer 등 중립 이름으로 교체), 의존성 표현을 정직하게 수정, verify_park.js 21개 통과 유지
+    - _Requirements: 6.8, 11.2, 12.13_
+
 ## Notes
 
 - `*`가 붙은 sub-task는 선택 사항이며 빠른 MVP를 위해 건너뛸 수 있다. 건너뛰어도 Verifier(6.5)가 핵심 불변식을 시드 고정으로 검사한다.
@@ -352,7 +357,8 @@ PARK.EXE는 공유 엔진 `src/core/fsm-engine.js`를 수정 없이 재사용하
     { "id": 4, "tasks": ["8.1", "8.2", "9.4", "11.1"] },
     { "id": 5, "tasks": ["11.2", "12.1", "12.2", "12.3"] },
     { "id": 6, "tasks": ["12.4"] },
-    { "id": 7, "tasks": ["14.1", "14.2", "14.3"] }
+    { "id": 7, "tasks": ["14.1", "14.2", "14.3"] },
+    { "id": 8, "tasks": ["15.1"] }
   ]
 }
 ```

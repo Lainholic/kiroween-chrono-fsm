@@ -2,7 +2,7 @@
 
 ## Overview
 
-PARK.EXE는 기존 Chrono-FSM의 공유 엔진(`src/core/fsm-engine.js`)을 한 줄도 바꾸지 않고 재사용하는 네 번째 앱이다. 진입점은 `park.html`이고, 모든 앱 코드는 `src/park/` 아래 ES 모듈로 둔다. 앱은 DOS 부팅 화면, 절차적 HDD 파킹 사운드, CRT 전환, Lemmings 스타일 사무실 스크린세이버로 이어진다.
+PARK.EXE는 기존 Chrono-FSM의 공유 엔진(`src/core/fsm-engine.js`)을 한 줄도 바꾸지 않고 재사용하는 네 번째 앱이다. 진입점은 `park.html`이고, 모든 앱 코드는 `src/park/` 아래 ES 모듈로 둔다. 앱은 DOS 부팅 화면, 절차적 HDD 파킹 사운드, CRT 전환, 레트로 미니어처 픽셀 에이전트 스타일 사무실 스크린세이버로 이어진다.
 
 설계의 핵심 결정은 다섯 가지다.
 
@@ -10,7 +10,7 @@ PARK.EXE는 기존 Chrono-FSM의 공유 엔진(`src/core/fsm-engine.js`)을 한 
 2. **시뮬레이션 시간 기반 타이머.** Agent의 대기 시간(1~3초 idle, 1.5초 결과 표시, 1000ms 인쇄 페이지 등)은 엔진의 `timeout`(벽시계 `setTimeout`)이 아니라 context의 `dwell`(상태 체류 시간)과 `TICK` 이벤트 guard로 표현한다. 탭이 숨겨지면 시뮬레이션이 멈추고(Req 10.2), 프레임 시간 상한(Req 10.5)과 결정적 테스트가 가능해진다. 앱 단계(`BOOT`, `PARKING`, `CRT_ON`, `OFFICE`)만 실제 시간으로 흐르므로 엔진의 `timeout`을 사용한다.
 3. **알림 큐로 재진입 차단.** 엔진의 `send()`는 `action` 실행 후 `transitionTo()`를 호출하고, `enterState()`는 리스너를 동기 호출한다. 리스너나 `action` 안에서 다른 엔진(또는 같은 엔진)에 `send()`하면 상태가 덮어써지거나 알림이 중복된다. 그래서 리스너는 알림을 큐에 쌓기만 하고, 시뮬레이션이 외부 `send()` 호출이 모두 끝난 뒤 큐를 비우며 반응(말풍선, 이동 목표, 다른 Agent로 이벤트 전달)을 처리한다.
 4. **엔진 무수정을 자동 증명.** Verifier가 `fsm-engine.js`의 LF 정규화 SHA-256을 기준 해시와 비교하고, `fsm-engine.ts`와 런타임 로직 동일성을 검사한다. Kiro hook이 엔진 파일 저장을 감시한다.
-5. **의존성 0 유지.** 앱과 `npm test` 경로(Verifier)는 Node 내장 모듈만 쓴다. property-based test는 별도 스위트(`npm run test:prop`)로 분리하고 devDependency 1개(fast-check)만 허용한다. 이 결정은 아래 "설계 결정" 표에 근거와 함께 적었다.
+5. **외부 런타임 의존성 0 유지 (순수 바닐라 JS, Canvas 2D, Web Audio API).** 앱과 `npm test` 경로(Verifier)는 Node 내장 모듈만 쓴다. property-based test는 별도 스위트(`npm run test:prop`)로 분리하고, 그 스위트만 devDependency 1개(fast-check)를 쓴다. 이 결정은 아래 "설계 결정" 표에 근거와 함께 적었다.
 
 ### 조사 결과 요약 (코드베이스 기반)
 
@@ -52,7 +52,7 @@ src/park/
   render.js           [canvas] # Canvas 2D 렌더러 (Boot, Office, CRT 효과)
   main.js             [dom]    # DOM 연결: 입력, 제스처 unlock, visibility, 단계 엔진 연결
 tests/
-  verify_park.js               # 의존성 없는 Verifier (CommonJS + 동적 import)
+  verify_park.js               # 외부 의존성 없는 Verifier (CommonJS + 동적 import)
   run_all.js                   # verify_chrono.js와 verify_park.js를 모두 실행
   lib/report.js                # PASS/FAIL 줄 형식과 종료 코드 계산 (순수)
   props/*.test.js              # fast-check property test (node:test), npm run test:prop
@@ -172,7 +172,7 @@ sequenceDiagram
 | 확률 분기 | 같은 이벤트의 transition 2개 + `probability` | 프로젝트 규칙. UI에서 `Math.random()` 금지. 대기 시간 무작위(idle 1~3초, pagesTarget 2~4)는 확률 분기가 아니므로 스키마 팩토리에 주입된 `rng`를 `onEnter`/`action`에서 호출한다. |
 | 기준 해시 | `tests/verify_park.js` 상수, CRLF를 LF로 정규화 후 SHA-256 | Windows(autocrlf)와 Linux CI에서 같은 값이 나온다. 구현 시 `git show HEAD:src/core/fsm-engine.js`로 계산하고 작업 트리와 일치하는지 확인한다. |
 | `npm test` | `node tests/run_all.js` | `a && b`는 a 실패 시 b를 건너뛴다. 러너는 두 스크립트를 모두 실행하고 하나라도 실패하면 종료 코드 1을 낸다 (Req 11.5). `verify_chrono.js`는 수정하지 않는다. |
-| Property test 라이브러리 | fast-check (exact 버전 고정, devDependency), 실행기는 `node:test` | PBT를 직접 구현하지 않는다는 원칙과 "의존성 0" 사이의 절충. 앱 런타임과 `npm test`/Verifier 경로는 의존성 0을 유지하고, `npm run test:prop`만 `node_modules`가 필요하다. 사용자 확인이 필요한 항목이다 (아래 Error Handling 뒤 "열린 질문" 참조). |
+| Property test 라이브러리 | fast-check (exact 버전 고정, devDependency), 실행기는 `node:test` | PBT를 직접 구현하지 않는다는 원칙과 "외부 런타임 의존성 0" 사이의 절충. 앱 런타임과 `npm test`/Verifier 경로는 외부 런타임 의존성이 없고, fast-check는 dev 전용이며 선택 스위트인 `npm run test:prop`만 `node_modules`가 필요하다. 사용자 확인이 필요한 항목이다 (아래 Error Handling 뒤 "열린 질문" 참조). |
 | 스프라이트 형식 | 16줄 x 16자 문자열, 문자는 16진 팔레트 인덱스 | Req 12.5가 "팔레트 인덱스 정수 범위"를 검사하므로 문자→인덱스 변환이 명확해야 한다. 정의되지 않은 문자는 렌더러에서 투명 처리 (Req 4.9). |
 | 모듈 로드 실패 표시 | `park.html`의 인라인 loader가 `import('./src/park/main.js')`를 호출하고 실패하면 모듈 목록을 리프부터 개별 `import()`로 시도해 실패 경로를 찾는다 | 정적 import 실패는 어느 모듈인지 브라우저가 항상 알려주지 않는다. 경로는 `console.error`, 안내는 `<pre>` 텍스트로 표시 (Req 11.4). 같은 출처 요청만 발생한다. |
 
@@ -245,7 +245,7 @@ export const AGENT_STATE_TARGETS: Record<AgentId, Record<StateId, AnchorName | n
 
 **공통 `onEnter`**: `ctx.dwell = 0`. 상태별 `onEnter`가 추가 초기화를 한다.
 
-#### Newbie_Lemming
+#### Junior_Developer (Newbie)
 
 ```mermaid
 stateDiagram-v2
@@ -737,7 +737,7 @@ prework에서 testable로 분류된 항목을 다음과 같이 합쳤다.
 
 ### Property 13: 문서 픽셀은 문서를 들고 있을 때만 보인다
 
-*For any* Newbie_Lemming 프레임과 `hasDoc` 값에서, `visiblePixels`는 `hasDoc`이 참이면 디코딩 결과와 같고, 거짓이면 `paperIndex` 픽셀만 투명으로 바뀌고 나머지 픽셀은 변하지 않는다.
+*For any* Junior_Developer 프레임과 `hasDoc` 값에서, `visiblePixels`는 `hasDoc`이 참이면 디코딩 결과와 같고, 거짓이면 `paperIndex` 픽셀만 투명으로 바뀌고 나머지 픽셀은 변하지 않는다.
 
 **Validates: Requirements 4.8**
 
@@ -761,13 +761,13 @@ prework에서 testable로 분류된 항목을 다음과 같이 합쳤다.
 
 ### Property 17: REVIEW 분포와 재현성
 
-*For any* 시드에서, 시드 고정 `Math.random`으로 SUBMITTING 상태의 Newbie_Lemming 엔진에 `REVIEW`를 10,000회 보내면 APPROVED 비율은 0.67 이상 0.73 이하이고, 같은 시드로 다시 실행하면 같은 비율이 나온다.
+*For any* 시드에서, 시드 고정 `Math.random`으로 SUBMITTING 상태의 Junior_Developer 엔진에 `REVIEW`를 10,000회 보내면 APPROVED 비율은 0.67 이상 0.73 이하이고, 같은 시드로 다시 실행하면 같은 비율이 나온다.
 
 **Validates: Requirements 7.4, 7.10, 12.9**
 
 ### Property 18: REVIEW는 SUBMITTING에서만 효과가 있다
 
-*For any* Newbie_Lemming 엔진과 임의의 이벤트 시퀀스에서, 현재 상태가 SUBMITTING이 아닐 때 `REVIEW`는 `false`를 돌려주고 상태와 context를 바꾸지 않으며, 모든 시점에서 현재 상태는 `states`에 있는 값이다.
+*For any* Junior_Developer 엔진과 임의의 이벤트 시퀀스에서, 현재 상태가 SUBMITTING이 아닐 때 `REVIEW`는 `false`를 돌려주고 상태와 context를 바꾸지 않으며, 모든 시점에서 현재 상태는 `states`에 있는 값이다.
 
 **Validates: Requirements 7.15, 7.1**
 
@@ -848,7 +848,7 @@ prework에서 testable로 분류된 항목을 다음과 같이 합쳤다.
 
 ### 이중 접근
 
-- **Verifier (`npm run test:park`, `npm test`에 포함)**: 의존성 없는 Node 스크립트. 파일 구조, 정적 검사, 엔진 해시/트윈, 스프라이트 크기, 스키마 정합성, 시드 고정 확률 분포, Copier 루프, Seek 계획, 가짜 AudioContext 게이팅. `PASS`/`FAIL` 한 줄 출력.
+- **Verifier (`npm run test:park`, `npm test`에 포함)**: 외부 의존성 없이 Node 내장 모듈만 쓰는 스크립트. 파일 구조, 정적 검사, 엔진 해시/트윈, 스프라이트 크기, 스키마 정합성, 시드 고정 확률 분포, Copier 루프, Seek 계획, 가짜 AudioContext 게이팅. `PASS`/`FAIL` 한 줄 출력.
 - **Property test (`npm run test:prop`)**: 위 26개 속성을 fast-check로 구현하고 `node:test`로 실행한다. 속성 하나당 property-based test 하나. 각 test는 최소 100회 반복(`numRuns: 100` 이상)으로 설정한다. 확률 분포(Property 17)는 반복당 10,000회 시도를 하므로 `numRuns`를 낮춰 20회 이상으로 하되 이 예외를 주석에 명시한다.
 - **Unit/example test**: 구조적 검사(상태 집합, 초기 상태, 말풍선 대사 텍스트, 부팅 타임라인, 정적 스캔, hook JSON, 스크립트 정의)는 예시 기반으로 Verifier에 둔다.
 - **수동 브라우저 점검**: `npm start` 후 `/park.html`에서 CRT 효과, 정수 배율 선명도, 흔들림/롤/켜짐 전환, 사운드 청감, 탭 숨김/복귀, 모듈 로드 실패 메시지 (파일 이름을 잠시 바꿔 확인).
