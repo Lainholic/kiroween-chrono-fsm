@@ -46,7 +46,7 @@ const BOSS_B = [
 ];
 
 // ---------------------------------------------------------------- Junior developer
-// Green spiky hair, blue shirt, holding a paper (index 5 = paper only).
+// Spiky brown hair, orange hoodie, holding a paper (index 5 = paper only).
 const NEWBIE_A = [
   '0000030303030000',
   '0000133333310000',
@@ -169,8 +169,8 @@ export const SPRITES = Object.freeze({
     frames: Object.freeze([Object.freeze(BOSS_A), Object.freeze(BOSS_B)])
   }),
   newbie: Object.freeze({
-    // 0 clear, 1 outline, 2 skin, 3 green hair, 4 shirt, 5 paper, 6 unused, 7 shoes
-    palette: Object.freeze(['transparent', '#14301a', '#ffe0bd', '#4ade80', '#3b82f6', '#f5f5f4', '#9ca3af', '#7c2d12']),
+    // 0 clear, 1 outline, 2 skin, 3 brown hair, 4 orange hoodie, 5 paper, 6 unused, 7 shoes
+    palette: Object.freeze(['transparent', '#1f1a17', '#ffe0bd', '#5c3d2e', '#f97316', '#f5f5f4', '#9ca3af', '#7c2d12']),
     paperIndex: 5,
     frames: Object.freeze([Object.freeze(NEWBIE_A), Object.freeze(NEWBIE_B)])
   }),
