@@ -529,6 +529,64 @@
         "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
         "timestamp": 1794154616348
       }
+    ],
+    "14.1 100% English 텍스트와 4대 Agent 말풍선, Consolas 폰트 전환": [
+      {
+        "executionId": "1bfdc9b3-ac60-4643-bf59-5eefaaae933c",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794199857352
+      },
+      {
+        "executionId": "1bfdc9b3-ac60-4643-bf59-5eefaaae933c",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794199861674
+      },
+      {
+        "executionId": "1bfdc9b3-ac60-4643-bf59-5eefaaae933c",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794199962671
+      }
+    ],
+    "14.2 Idle 대기 시간 4~8초로 확대": [
+      {
+        "executionId": "1bfdc9b3-ac60-4643-bf59-5eefaaae933c",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794199857404
+      },
+      {
+        "executionId": "1bfdc9b3-ac60-4643-bf59-5eefaaae933c",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794199962726
+      },
+      {
+        "executionId": "1bfdc9b3-ac60-4643-bf59-5eefaaae933c",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794200068467
+      }
+    ],
+    "14.3 CRT 모니터 베젤과 디바이스 픽셀 정수 배율": [
+      {
+        "executionId": "1bfdc9b3-ac60-4643-bf59-5eefaaae933c",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794199857446
+      },
+      {
+        "executionId": "1bfdc9b3-ac60-4643-bf59-5eefaaae933c",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794200068521
+      },
+      {
+        "executionId": "1bfdc9b3-ac60-4643-bf59-5eefaaae933c",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794200219931
+      }
+    ],
+    "14. 실행 후 피드백 반영 (English 전환, Idle 확대, CRT 베젤)": [
+      {
+        "executionId": "1bfdc9b3-ac60-4643-bf59-5eefaaae933c",
+        "chatSessionId": "sess_c04a1ce0-50f5-4dfe-8cef-cb31a6a392c3",
+        "timestamp": 1794200219967
+      }
     ]
   }
 }

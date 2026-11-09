@@ -7,6 +7,11 @@
 // - Contexts are JSON-serializable (the engine deep-copies them via JSON).
 // - State configs may carry app-only fields `say` / `walkTo`; the engine ignores them.
 
+// Idle/rest pacing (sim seconds): every IDLE draws idleFor in [IDLE_MIN_SEC, IDLE_MIN_SEC + IDLE_SPAN_SEC].
+export const IDLE_MIN_SEC = 4;
+export const IDLE_SPAN_SEC = 4;
+const drawIdle = (rng) => IDLE_MIN_SEC + rng() * IDLE_SPAN_SEC;
+
 const resetDwell = (ctx) => {
   ctx.dwell = 0;
 };
@@ -30,13 +35,34 @@ export const AGENT_STATE_TARGETS = Object.freeze({
   }),
 });
 
-// Per-state speech bubble lines shown on entry (Req 7.5, 7.6).
+// Per-state speech bubble lines shown on entry (Req 7.5, 7.6, 9.8).
+// A value is a string or an array of strings; sim.js picks one with the injected rng.
 export const AGENT_STATE_SAY = Object.freeze({
-  boss: Object.freeze({}),
-  newbie: Object.freeze({ APPROVED: '승인!', REJECTED: '반려…' }),
-  copier: Object.freeze({}),
-  coffee: Object.freeze({}),
+  boss: Object.freeze({
+    REVIEWING: 'Reviewing...',
+    STAMP_APPROVE: 'APPROVED! 👍',
+    STAMP_REJECT: Object.freeze(['REJECT! ❌', 'Where are the tests?']),
+  }),
+  newbie: Object.freeze({
+    IDLE: 'Coffee break...',
+    WALKING_TO_BOSS: 'Drafting PR...',
+    SUBMITTING: 'LGTM please? 🥺',
+    APPROVED: 'APPROVED! 🎉',
+    REJECTED: 'REJECTED?! 😭',
+  }),
+  copier: Object.freeze({
+    WALKING_TO_COPIER: 'Paper jam?!',
+    PRINTING: Object.freeze(['Printing 500 pages...', 'Printing 500 pages...', 'Paper jam?!']),
+    DELIVERING: 'Done!',
+  }),
+  coffee: Object.freeze({
+    WALKING_TO_COOLER: 'Espresso break ☕',
+    RECHARGING: 'CPU cooling...',
+    IDLE: 'AFK...',
+  }),
 });
+
+export const BOSS_COFFEE_SAY = 'Nice brew ☕';
 
 // Build a state config: shared onEnter dwell reset, optional extra init, walkTo/say metadata.
 function state(agent, id, transitions, extraEnter) {
@@ -50,7 +76,7 @@ function state(agent, id, transitions, extraEnter) {
   const walkTo = AGENT_STATE_TARGETS[agent][id];
   if (walkTo) cfg.walkTo = walkTo;
   const say = AGENT_STATE_SAY[agent][id];
-  if (say) cfg.say = say;
+  if (say) cfg.say = Array.isArray(say) ? [...say] : say;
   return cfg;
 }
 
@@ -88,7 +114,7 @@ export function createNewbieSchema(deps) {
   return {
     id: 'park-newbie',
     initialState: 'IDLE',
-    context: { dwell: 0, idleFor: 2, hasDoc: false },
+    context: { dwell: 0, idleFor: drawIdle(rng), hasDoc: false },
     states: {
       IDLE: state('newbie', 'IDLE', [
         {
@@ -97,7 +123,7 @@ export function createNewbieSchema(deps) {
           guard: (ctx) => ctx.dwell >= ctx.idleFor,
           action(ctx) { ctx.hasDoc = true; },
         },
-      ], (ctx) => { ctx.idleFor = 1 + rng() * 2; }),
+      ], (ctx) => { ctx.idleFor = drawIdle(rng); }),
       WALKING_TO_BOSS: state('newbie', 'WALKING_TO_BOSS', [
         { event: 'ARRIVED', target: 'SUBMITTING' },
       ]),
@@ -123,15 +149,16 @@ export function createCopierSchema(deps) {
   return {
     id: 'park-copier',
     initialState: 'IDLE',
-    context: { dwell: 0, pagesPrinted: 0, pagesTarget: 3 },
+    context: { dwell: 0, idleFor: drawIdle(rng), pagesPrinted: 0, pagesTarget: 3 },
     states: {
       IDLE: state('copier', 'IDLE', [
         {
           event: 'COPY_REQUEST',
           target: 'WALKING_TO_COPIER',
+          guard: (ctx) => ctx.dwell >= ctx.idleFor,
           action(ctx) { ctx.pagesTarget = 2 + Math.floor(rng() * 3); },
         },
-      ]),
+      ], (ctx) => { ctx.idleFor = drawIdle(rng); }),
       WALKING_TO_COPIER: state('copier', 'WALKING_TO_COPIER', [
         {
           event: 'ARRIVED',
@@ -169,15 +196,15 @@ export function createCopierSchema(deps) {
 }
 
 export function createCoffeeSchema(deps) {
-  void deps;
+  const { rng } = deps;
   return {
     id: 'park-coffee',
     initialState: 'IDLE',
-    context: { dwell: 0, atRack: false },
+    context: { dwell: 0, idleFor: drawIdle(rng), atRack: false },
     states: {
       IDLE: state('coffee', 'IDLE', [
-        { event: 'TICK', target: 'WALKING_TO_COOLER', guard: (ctx) => ctx.dwell >= 3.0 },
-      ]),
+        { event: 'TICK', target: 'WALKING_TO_COOLER', guard: (ctx) => ctx.dwell >= ctx.idleFor },
+      ], (ctx) => { ctx.idleFor = drawIdle(rng); }),
       WALKING_TO_COOLER: state('coffee', 'WALKING_TO_COOLER', [
         { event: 'ARRIVED', target: 'FILLING' },
       ]),

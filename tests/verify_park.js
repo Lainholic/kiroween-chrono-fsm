@@ -204,6 +204,8 @@ check('[fsm:copier] PRINTING loop runs exactly pagesTarget ticks before DELIVERI
   for (const target of [1, 3, 5]) {
     const engine = new FsmEngine(schemas.createCopierSchema({ rng: rngMod.createRng(7) }));
     try {
+      expectTrue(!engine.send('COPY_REQUEST'), 'COPY_REQUEST rejected before idleFor', true);
+      engine.context.dwell = engine.context.idleFor;
       expectTrue(engine.send('COPY_REQUEST'), 'COPY_REQUEST accepted', false);
       expectTrue(engine.send('ARRIVED'), 'ARRIVED accepted', false);
       expectEq(engine.getCurrentState(), 'PRINTING');
@@ -222,6 +224,58 @@ check('[fsm:copier] PRINTING loop runs exactly pagesTarget ticks before DELIVERI
   }
 });
 
+check('[fsm:idle] 40 seeds: newbie/coffee/copier idleFor in [4,8] and each rests >= 4 s in IDLE', async () => {
+  const [{ FsmEngine }, schemas, rngMod] = await Promise.all([loadEngine(), loadPark('schemas'), loadPark('rng')]);
+  const STEP = 0.1;
+  const make = { newbie: schemas.createNewbieSchema, coffee: schemas.createCoffeeSchema, copier: schemas.createCopierSchema };
+  const leave = { newbie: 'WALKING_TO_BOSS', coffee: 'WALKING_TO_COOLER', copier: 'WALKING_TO_COPIER' };
+  for (let seed = 1; seed <= 40; seed++) {
+    for (const name of Object.keys(make)) {
+      const tag = `${name} seed ${seed}`;
+      const engine = new FsmEngine(make[name]({ rng: rngMod.createRng(seed) }));
+      try {
+        // Initial context (sim start) and the value drawn on a fresh IDLE entry (re-enter via a full loop for the copier path is
+        // covered by schema onEnter; here we force it with a self-contained re-entry).
+        const initial = engine.context.idleFor;
+        expectTrue(initial >= 4 && initial <= 8, `${tag}: initial idleFor in [4,8]`, initial);
+        for (let round = 0; round < 2; round++) {
+          const idleFor = engine.context.idleFor;
+          expectTrue(idleFor >= 4 && idleFor <= 8, `${tag}: idleFor in [4,8]`, idleFor);
+          let t = 0;
+          let moved = false;
+          for (let i = 0; i < 200 && !moved; i++) {
+            t += STEP;
+            if (name === 'copier') {
+              engine.context.dwell += STEP;
+              moved = engine.send('COPY_REQUEST');
+            } else {
+              moved = schemas.tickAgent(engine, STEP);
+            }
+            if (moved) break;
+          }
+          expectEq(engine.getCurrentState(), leave[name]);
+          expectTrue(t >= 4 - 1e-9, `${tag}: left IDLE no earlier than 4 s`, t);
+          expectTrue(t <= 8 + STEP + 1e-9, `${tag}: left IDLE by 8 s + one step`, t);
+          // Re-enter IDLE through the schema's own transitions to observe the onEnter draw.
+          if (name === 'newbie') {
+            engine.send('ARRIVED'); engine.send('REVIEW');
+            while (engine.getCurrentState() !== 'IDLE' && engine.getCurrentState() !== 'RETURNING') schemas.tickAgent(engine, 0.5);
+            engine.send('ARRIVED');
+          } else if (name === 'coffee') {
+            engine.send('ARRIVED'); schemas.tickAgent(engine, 2); engine.send('ARRIVED'); engine.send('ARRIVED');
+            schemas.tickAgent(engine, 3);
+          } else {
+            engine.send('ARRIVED'); engine.context.pagesTarget = 1; schemas.tickAgent(engine, 1);
+            engine.send('ARRIVED'); schemas.tickAgent(engine, 2);
+          }
+          expectEq(engine.getCurrentState(), 'IDLE');
+        }
+      } finally {
+        engine.destroy();
+      }
+    }
+  }
+});
 check('[audio:plan] planSeekSound: duration 2..3, >=6 seeks gap>=20ms, latch after last seek, motor descends', async () => {
   const [{ planSeekSound }, { createRng }] = await Promise.all([loadPark('audio-plan'), loadPark('rng')]);
   for (let seed = 1; seed <= 40; seed++) {
@@ -267,6 +321,44 @@ check('[static:deps] no direct Math.random (except rng.js), no http(s) URLs, no 
       if (!exempt(f) && re.test(code)) throw new Mismatch(`${f} without ${label}`, 'found');
     }
   }
+});
+
+check('[static:english] src/park/*.js and park.html contain no Hangul and no Malgun Gothic', () => {
+  const files = fs.readdirSync(PARK_DIR).filter((f) => f.endsWith('.js')).map((f) => path.join(PARK_DIR, f));
+  files.push(path.join(ROOT, 'park.html'));
+  const hangul = /[\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]/;
+  for (const file of files) {
+    const text = readText(file);
+    const h = hangul.exec(text);
+    if (h) throw new Mismatch(`${path.basename(file)} without Hangul`, `found "${h[0]}"`);
+    if (/Malgun Gothic/i.test(text)) throw new Mismatch(`${path.basename(file)} without Malgun Gothic`, 'found');
+  }
+});
+
+check('[static:bezel] park.html: canvas#park-canvas inside a CRT bezel wrapper, 4/3 aspect-ratio, border-radius, no URLs', () => {
+  const html = readText(path.join(ROOT, 'park.html'));
+  const m = /<div[^>]*id="park-monitor"[^>]*>([\s\S]*?)<script/i.exec(html);
+  expectTrue(!!m, 'monitor wrapper #park-monitor', 'not found');
+  expectTrue(/<canvas\b[^>]*id="park-canvas"/i.test(m[1]), 'canvas#park-canvas nested in #park-monitor', 'not nested');
+  expectTrue(/<div[^>]*id="park-screen"[^>]*>\s*<canvas\b[^>]*id="park-canvas"/i.test(m[1]),
+    'canvas inside #park-screen', 'not found');
+  expectTrue(/aspect-ratio\s*:\s*4\s*\/\s*3/.test(html), 'aspect-ratio: 4 / 3', 'missing');
+  expectTrue(/border-radius\s*:/.test(html), 'border-radius', 'missing');
+  expectTrue(/id="park-error"/.test(html) && /<noscript>/.test(html), '#park-error and <noscript> kept', 'missing');
+  expectTrue(!/https?:\/\//i.test(html), 'no external URLs', 'found');
+  expectTrue(!/[\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]/.test(html), 'no Hangul', 'found');
+  expectTrue(!/Malgun Gothic/i.test(html), 'no Malgun Gothic', 'found');
+});
+
+check('[static:dpr] main.js uses devicePixelRatio + computeScale (integer device-pixel scaling)', () => {
+  const main = readText(path.join(PARK_DIR, 'main.js'));
+  expectTrue(/devicePixelRatio/.test(main), 'main.js references devicePixelRatio', 'missing');
+  expectTrue(/getBoundingClientRect/.test(main), 'main.js measures the screen box', 'missing');
+  expectTrue(/computeScale/.test(main), 'main.js uses computeScale', 'missing');
+  const render = readText(path.join(PARK_DIR, 'render.js'));
+  expectTrue(/computeScale\(/.test(render), 'render.js uses computeScale', 'missing');
+  const sm = readText(path.join(PARK_DIR, 'scene-math.js'));
+  expectTrue(/Math\.floor\(/.test(sm) && /export function computeScale/.test(sm), 'computeScale floors to integers', 'missing');
 });
 
 // ---------------------------------------------------------------- CHECKS: audit

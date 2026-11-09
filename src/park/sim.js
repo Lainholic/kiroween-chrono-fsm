@@ -2,7 +2,8 @@
 // Owns four agent FsmEngines, movement, a notification queue and collaboration reactions.
 import { FsmEngine } from '../core/fsm-engine.js';
 import {
-  createBossSchema, createNewbieSchema, createCopierSchema, createCoffeeSchema, tickAgent
+  createBossSchema, createNewbieSchema, createCopierSchema, createCoffeeSchema, tickAgent,
+  BOSS_COFFEE_SAY
 } from './schemas.js';
 import { createBubbleStore } from './bubbles.js';
 import { moveToward } from './scene-math.js';
@@ -68,7 +69,12 @@ export function createSimulation({ rng }) {
     if (n.prev === n.state) return;   // self transition: no entry effects
     const agent = agents[n.agentId];
     const cfg = schemas[n.agentId].states[n.state] || {};
-    if (cfg.say) bubbles.show(n.agentId, cfg.say, sim.time);
+    if (cfg.say) {
+      const line = Array.isArray(cfg.say)
+        ? cfg.say[Math.min(cfg.say.length - 1, Math.floor(rng() * cfg.say.length))]
+        : cfg.say;
+      if (typeof line === 'string') bubbles.show(n.agentId, line, sim.time);
+    }
     if (cfg.walkTo) {
       const a = ANCHORS[cfg.walkTo];
       agent.target = a ? { x: a.x, y: a.y } : null;
@@ -81,7 +87,7 @@ export function createSimulation({ rng }) {
       else if (n.state === 'REJECTED') send('boss', 'RESULT_REJECTED');
       else if (n.state === 'RETURNING') send('boss', 'NEWBIE_RETURNING');
     } else if (n.agentId === 'coffee' && n.state === 'RECHARGING' && n.prev === 'SERVING') {
-      bubbles.show('boss', '커피 좋아', sim.time);
+      bubbles.show('boss', BOSS_COFFEE_SAY, sim.time);
     }
   }
 
@@ -129,7 +135,10 @@ export function createSimulation({ rng }) {
       bctx.reviewSent = true;
       send('newbie', 'REVIEW');
     }
-    if (sim.pendingCopyJobs > 0 && agents.copier.engine.getCurrentState() === 'IDLE') {
+    const cop = agents.copier.engine;
+    // Jobs stay queued until the copier has rested in IDLE for its idleFor (schema guard mirrors this).
+    if (sim.pendingCopyJobs > 0 && cop.getCurrentState() === 'IDLE'
+        && cop.getContext().dwell >= cop.getContext().idleFor) {
       sim.pendingCopyJobs -= 1;
       send('copier', 'COPY_REQUEST');
     }

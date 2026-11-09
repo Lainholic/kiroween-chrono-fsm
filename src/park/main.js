@@ -10,8 +10,8 @@ import { createSimulation } from './sim.js';
 import { createAudio } from './audio.js';
 import { createRenderer } from './render.js';
 import { planSeekSound } from './audio-plan.js';
-import { shakeOffset, rollOffset, crtOnProgress } from './scene-math.js';
-import { CRT_ON_MS } from './constants.js';
+import { shakeOffset, rollOffset, crtOnProgress, computeScale } from './scene-math.js';
+import { CRT_ON_MS, LOGICAL_W, LOGICAL_H } from './constants.js';
 
 const canvas = document.getElementById('park-canvas');
 if (!canvas) throw new Error('PARK.EXE: #park-canvas not found');
@@ -176,10 +176,50 @@ document.addEventListener('visibilitychange', () => {
   else loop.resume();
 });
 
+// Crisp integer scaling in DEVICE pixels: measure the bezel's screen box (CSS px) times
+// devicePixelRatio, pick the largest integer scale k (computeScale), snap the canvas backing
+// store to exactly 320k x 200k device px and size it in CSS as that / dpr (1 canvas px = 1
+// device px, no fractional scaling, no letterbox inside the bezel). The screen box stays black.
+const screenBox = document.getElementById('park-screen') || canvas.parentElement || document.body;
+let dprMql = null;
+let lastKey = '';
+
 function onResize() {
-  renderer.resize(window.innerWidth, window.innerHeight);
+  const dpr = Math.max(0.25, Number(window.devicePixelRatio) || 1);
+  const rect = screenBox.getBoundingClientRect();
+  const devW = Math.max(1, Math.floor(rect.width * dpr));
+  const devH = Math.max(1, Math.floor(rect.height * dpr));
+  const k = computeScale(devW, devH);
+  const cw = LOGICAL_W * k, ch = LOGICAL_H * k;
+  const key = `${cw}x${ch}@${dpr}:${devW}x${devH}`;
+  if (key !== lastKey) {
+    lastKey = key;
+    renderer.resize(cw, ch);   // device pixels; computeScale inside yields the same k
+    canvas.style.width = `${cw / dpr}px`;
+    canvas.style.height = `${ch / dpr}px`;
+    // Center in the screen box, snapped to whole device pixels.
+    canvas.style.left = `${Math.floor((devW - cw) / 2) / dpr}px`;
+    canvas.style.top = `${Math.floor((devH - ch) / 2) / dpr}px`;
+  }
+  watchDpr(dpr);
 }
+
+// devicePixelRatio changes (zoom, moving between monitors) do not fire 'resize' everywhere.
+function watchDpr(dpr) {
+  if (typeof window.matchMedia !== 'function') return;
+  if (dprMql && dprMql.dpr === dpr) return;
+  if (dprMql) {
+    try { dprMql.removeEventListener('change', onResize); } catch (e) { /* ignore */ }
+  }
+  try {
+    dprMql = window.matchMedia(`(resolution: ${dpr}dppx)`);
+    dprMql.dpr = dpr;
+    dprMql.addEventListener('change', onResize);
+  } catch (e) { dprMql = null; }
+}
+
 window.addEventListener('resize', onResize);
+if (typeof ResizeObserver === 'function') new ResizeObserver(onResize).observe(screenBox);
 onResize();
 
 // The engine entered BOOT in its constructor, before the listener existed.

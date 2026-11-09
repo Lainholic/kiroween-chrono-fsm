@@ -321,6 +321,17 @@ PARK.EXE는 공유 엔진 `src/core/fsm-engine.js`를 수정 없이 재사용하
   - `npm test`(Chrono와 PARK 모두 통과), `npm run test:prop`, `git diff --stat -- src/core tests/verify_chrono.js .kiro/hooks/verify-chrono.kiro.hook`가 비어 있음을 확인한다.
   - 수동 점검 항목(사용자 몫): `npm start` 후 `/park.html`에서 CRT 효과, 사운드, 탭 숨김/복귀, 모듈 로드 실패 메시지를 확인한다.
 
+- [x] 14. 실행 후 피드백 반영 (English 전환, Idle 확대, CRT 베젤)
+  - [x] 14.1 100% English 텍스트와 4대 Agent 말풍선, Consolas 폰트 전환
+    - schemas.js/sim.js/render.js/park.html의 한글과 'Malgun Gothic' 제거, 상태별 영문 말풍선(배열이면 rng로 선택) 추가, `[static:english]` 검사 추가, requirements/design 문구 동기화
+    - _Requirements: 7.5, 7.6, 9.5, 9.8_
+  - [x] 14.2 Idle 대기 시간 4~8초로 확대
+    - Newbie/Coffee/Copier IDLE `idleFor` 4~8초(rng), verifier `[fsm:copier]` 호환 유지, `[fsm:idle]` 검사 추가, requirements/design 수치 동기화
+    - _Requirements: 7.2, 8.2, 9.2_
+  - [x] 14.3 CRT 모니터 베젤과 디바이스 픽셀 정수 배율
+    - park.html에 4:3 베젤(둥근 모서리, 음영) 구성, main.js/render.js에서 devicePixelRatio 기준 정수 배율로 선명하게 렌더, `[static:bezel]` 검사 추가
+    - _Requirements: 3.4, 3.5, 3.7_
+
 ## Notes
 
 - `*`가 붙은 sub-task는 선택 사항이며 빠른 MVP를 위해 건너뛸 수 있다. 건너뛰어도 Verifier(6.5)가 핵심 불변식을 시드 고정으로 검사한다.
@@ -340,7 +351,8 @@ PARK.EXE는 공유 엔진 `src/core/fsm-engine.js`를 수정 없이 재사용하
     { "id": 3, "tasks": ["4.9", "4.10", "6.5", "9.2", "9.3", "10.1"] },
     { "id": 4, "tasks": ["8.1", "8.2", "9.4", "11.1"] },
     { "id": 5, "tasks": ["11.2", "12.1", "12.2", "12.3"] },
-    { "id": 6, "tasks": ["12.4"] }
+    { "id": 6, "tasks": ["12.4"] },
+    { "id": 7, "tasks": ["14.1", "14.2", "14.3"] }
   ]
 }
 ```

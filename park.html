@@ -11,15 +11,125 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
+      background: radial-gradient(ellipse at center, #1b1b22 0%, #0a0a0d 70%, #050506 100%);
+      font-family: Consolas, monospace;
+    }
+    #park-stage {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      --mw: min(94vw, calc(88vh * 4 / 3));
+    }
+    /* Monitor body: 4:3 outer box, putty plastic, rounded corners. */
+    #park-monitor {
+      position: relative;
+      box-sizing: border-box;
+      width: var(--mw);
+      aspect-ratio: 4 / 3;
+      display: flex;
+      flex-direction: column;
+      padding: calc(var(--mw) * 0.045) calc(var(--mw) * 0.05) 0 calc(var(--mw) * 0.05);
+      border-radius: 4% / 5%;
+      background: linear-gradient(145deg, #d8cfb4 0%, #c4b999 45%, #a89d7e 100%);
+      box-shadow:
+        inset 0 2px 3px rgba(255, 255, 240, 0.65),
+        inset 0 -6px 14px rgba(70, 60, 35, 0.55),
+        inset 8px 0 14px rgba(255, 255, 235, 0.15),
+        0 18px 40px rgba(0, 0, 0, 0.8),
+        0 2px 0 #5d5540;
+    }
+    /* Recessed darker frame around the tube. */
+    #park-recess {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      box-sizing: border-box;
+      padding: calc(var(--mw) * 0.02);
+      border-radius: 3% / 4%;
+      background: linear-gradient(160deg, #3a362b 0%, #1c1a15 60%, #2a271f 100%);
+      box-shadow:
+        inset 0 6px 14px rgba(0, 0, 0, 0.9),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.7),
+        0 1px 0 rgba(255, 255, 240, 0.5),
+        0 -1px 0 rgba(60, 50, 30, 0.6);
+    }
+    /* Screen area (the tube): the script measures this box and snaps the canvas into it. */
+    #park-screen {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
       background: #000;
+      border-radius: 6% / 8%;
+      box-shadow:
+        inset 0 0 40px 8px rgba(0, 0, 0, 0.85),
+        inset 0 0 4px 1px rgba(51, 255, 102, 0.12);
     }
     #park-canvas {
+      position: absolute;
+      left: 0;
+      top: 0;
       display: block;
-      width: 100vw;
-      height: 100vh;
+      width: 320px;
+      height: 200px;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
       background: #000;
+    }
+    /* Glass reflection: purely visual, never intercepts input. */
+    #park-glass {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: 6% / 8%;
+      background:
+        linear-gradient(115deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.03) 22%, rgba(255, 255, 255, 0) 38%),
+        radial-gradient(ellipse at 28% 18%, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 45%);
+      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+    }
+    /* Chin: brand label, power LED, vents. */
+    #park-chin {
+      flex: 0 0 calc(var(--mw) * 0.0975);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2%;
+      color: #6b634b;
+      font-family: Consolas, monospace;
+      font-size: clamp(8px, calc(var(--mw) * 0.016), 24px);
+      letter-spacing: 0.18em;
+      font-weight: bold;
+      text-shadow: 0 1px 0 rgba(255, 255, 240, 0.55);
+    }
+    #park-vents {
+      width: 18%;
+      height: 38%;
+      background: repeating-linear-gradient(to bottom, #6f6750 0 2px, transparent 2px 6px);
+      opacity: 0.6;
+    }
+    #park-power {
+      display: flex;
+      align-items: center;
+      gap: 0.8em;
+    }
+    #park-led {
+      width: 0.9em;
+      height: 0.9em;
+      border-radius: 50%;
+      background: #3dff6e;
+      box-shadow: 0 0 6px 2px rgba(61, 255, 110, 0.7), inset 0 0 2px rgba(255, 255, 255, 0.8);
+    }
+    #park-stand {
+      width: 26vmin;
+      max-width: 30%;
+      height: 2.2vh;
+      margin-top: -1px;
+      background: linear-gradient(to bottom, #8f8568, #b3a889 40%, #6d654d);
+      border-radius: 0 0 14px 14px / 0 0 10px 10px;
+      box-shadow: 0 8px 14px rgba(0, 0, 0, 0.7);
     }
     #park-error {
       position: fixed;
@@ -28,7 +138,7 @@
       right: 0;
       margin: 0;
       padding: 16px;
-      font-family: "Courier New", Courier, monospace;
+      font-family: Consolas, monospace;
       font-size: 14px;
       color: #33ff66;
       background: #000;
@@ -41,15 +151,31 @@
       top: 0;
       left: 0;
       padding: 16px;
-      font-family: "Courier New", Courier, monospace;
+      font-family: Consolas, monospace;
       color: #ffb000;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
   <noscript>PARK.EXE requires JavaScript. Please enable it and reload.</noscript>
   <pre id="park-error" hidden></pre>
-  <canvas id="park-canvas"></canvas>
+  <div id="park-stage">
+    <div id="park-monitor" class="crt-bezel">
+      <div id="park-recess">
+        <div id="park-screen">
+          <canvas id="park-canvas"></canvas>
+          <div id="park-glass"></div>
+        </div>
+      </div>
+      <div id="park-chin">
+        <span id="park-brand">PARK-TRON 8088</span>
+        <span id="park-vents"></span>
+        <span id="park-power"><span>POWER</span><span id="park-led"></span></span>
+      </div>
+    </div>
+    <div id="park-stand"></div>
+  </div>
   <script type="module">
     const MODULES = ['constants', 'rng', 'sprites', 'schemas', 'bubbles', 'sim', 'loop', 'boot',
                      'audio-plan', 'scene-math', 'audio', 'render', 'main']

@@ -75,10 +75,10 @@ PARK.EXE는 1980년대 MS-DOS의 하드디스크 헤드 파킹 유틸리티 PARK
 1. WHEN 파킹 시퀀스가 시작되면, THE Renderer SHALL Seek_Sound 재생 시간 동안 Boot_Screen에 화면 흔들림(수평·수직 오프셋 최대 ±4 논리 픽셀, 매 프레임 갱신)과 수직 롤 효과(초당 1회 이상 화면 높이를 순환)를 적용한다
 2. WHEN Seek_Sound 재생이 끝나면, THE Renderer SHALL 100ms 이상 500ms 이하의 CRT 켜짐 효과로 Boot_Screen에서 Office_Scene으로 전환한다
 3. WHILE Office_Scene이 표시되는 동안, THE Renderer SHALL CRT_View의 스캔라인, 비네트, 인광 글로우를 매 프레임 적용한다
-4. WHILE Office_Scene이 표시되는 동안, THE Renderer SHALL 논리 해상도 320x200을 1 이상의 정수 배율로 확대하여 그리며, 뷰포트에 맞는 최대 정수 배율을 사용한다
+4. WHILE Office_Scene이 표시되는 동안, THE Renderer SHALL 논리 해상도 320x200을 1 이상의 정수 배율(디바이스 픽셀 기준)로 확대하여 그리며, CRT 베젤 화면 영역에 맞는 최대 정수 배율을 사용한다
 5. WHILE Office_Scene이 표시되는 동안, THE Renderer SHALL 이미지 스무딩을 끄고 nearest-neighbor 방식으로 확대한다
 6. WHEN 사용자가 Office_Scene에서 키를 누르거나 클릭하면, THE Park_App SHALL 입력 후 500ms 이내에 Boot_Screen의 Prompt로 복귀한다
-7. IF 뷰포트가 320x200 정수 1배율보다 작으면, THEN THE Renderer SHALL 1배율로 그리고 넘치는 영역을 잘라내며 오류 없이 Office_Scene 표시를 유지한다
+7. IF 베젤 화면 영역(뷰포트)이 320x200 정수 1배율보다 작으면, THEN THE Renderer SHALL 1배율로 그리고 넘치는 영역을 잘라내며 오류 없이 Office_Scene 표시를 유지한다
 8. IF 전환 효과(1~2번 기준) 진행 중에 사용자 입력이 발생하면, THEN THE Park_App SHALL 해당 입력을 무시하고 현재 상태와 효과 진행을 유지한다
 
 ### Requirement 4: 16x16 픽셀아트 Agent와 걷기 애니메이션
@@ -134,11 +134,11 @@ PARK.EXE는 1980년대 MS-DOS의 하드디스크 헤드 파킹 유틸리티 PARK
 #### Acceptance Criteria
 
 1. THE Newbie_Lemming Agent_Schema SHALL IDLE, WALKING_TO_BOSS, SUBMITTING, APPROVED, REJECTED, RETURNING 상태를 정의한다
-2. WHEN Newbie_Lemming이 IDLE 상태에 진입한 뒤 1.0초 이상 3.0초 이하의 무작위 대기 시간이 경과하면, THE Newbie_Lemming SHALL 문서를 들고 WALKING_TO_BOSS 상태로 전이한다
+2. WHEN Newbie_Lemming이 IDLE 상태에 진입한 뒤 4.0초 이상 8.0초 이하의 무작위 대기 시간이 경과하면, THE Newbie_Lemming SHALL 문서를 들고 WALKING_TO_BOSS 상태로 전이한다
 3. WHEN Newbie_Lemming이 WALKING_TO_BOSS 상태에서 boss desk 앞 도착 위치에 도달하면, THE Newbie_Lemming SHALL SUBMITTING 상태로 전이한다
 4. WHEN Newbie_Lemming이 SUBMITTING 상태에서 `REVIEW` 이벤트를 받으면, THE Agent_Schema SHALL 확률 0.70으로 APPROVED, 확률 0.30으로 REJECTED로 전이하는 두 transition을 가진다
-5. WHEN Newbie_Lemming이 APPROVED 상태에 진입하면, THE Speech_Bubble SHALL `승인!` 텍스트를 표시한다
-6. WHEN Newbie_Lemming이 REJECTED 상태에 진입하면, THE Speech_Bubble SHALL `반려…` 텍스트를 표시한다
+5. WHEN Newbie_Lemming이 APPROVED 상태에 진입하면, THE Speech_Bubble SHALL `APPROVED! 🎉` 텍스트를 표시한다
+6. WHEN Newbie_Lemming이 REJECTED 상태에 진입하면, THE Speech_Bubble SHALL `REJECTED?! 😭` 텍스트를 표시한다
 7. WHEN Newbie_Lemming이 APPROVED 상태에 진입하면, THE Copier_Runner SHALL 복사 작업 요청을 1회 받는다
 8. WHEN Newbie_Lemming이 APPROVED 또는 REJECTED 상태에 진입한 뒤 1.5초가 경과하면, THE Newbie_Lemming SHALL RETURNING 상태로 전이한다
 9. WHEN Newbie_Lemming이 RETURNING 상태에서 시작 위치에 도달하면, THE Newbie_Lemming SHALL IDLE 상태로 전이한다
@@ -156,7 +156,7 @@ PARK.EXE는 1980년대 MS-DOS의 하드디스크 헤드 파킹 유틸리티 PARK
 #### Acceptance Criteria
 
 1. THE Copier_Runner Agent_Schema SHALL IDLE, WALKING_TO_COPIER, PRINTING, DELIVERING, WAITING의 5개 상태를 정의하고, 초기 상태를 IDLE로 지정한다
-2. WHEN Copier_Runner가 IDLE 상태에서 복사 작업 요청 이벤트를 받으면, THE Copier_Runner SHALL WALKING_TO_COPIER 상태로 전이한다
+2. WHEN Copier_Runner가 IDLE 상태에서 4.0초 이상 8.0초 이하의 무작위 휴식 시간을 보낸 뒤 복사 작업 요청 이벤트를 받으면, THE Copier_Runner SHALL (휴식 시간 이전의 요청은 거부되며 작업은 큐에 남는다) WALKING_TO_COPIER 상태로 전이한다
 3. WHEN Copier_Runner가 WALKING_TO_COPIER 상태에서 copier 앞에 도착하면, THE Copier_Runner SHALL PRINTING 상태로 전이하고 `context.pagesPrinted`를 0으로 설정한다
 4. WHILE Copier_Runner가 PRINTING 상태이면, THE Copier_Runner Agent_Schema SHALL `context.pagesPrinted` 값을 1000ms마다 1씩 증가시킨다
 5. WHEN PRINTING 상태에서 `context.pagesPrinted` 값이 `context.pagesTarget` 값 이상이 되면, THE Copier_Runner SHALL DELIVERING 상태로 전이한다
@@ -172,13 +172,13 @@ PARK.EXE는 1980년대 MS-DOS의 하드디스크 헤드 파킹 유틸리티 PARK
 #### Acceptance Criteria
 
 1. THE Coffee_Bot Agent_Schema SHALL IDLE, WALKING_TO_COOLER, FILLING, SERVING, RECHARGING의 5개 상태를 정의하고, 초기 상태를 IDLE로 지정한다
-2. WHEN Coffee_Bot이 IDLE 상태에 진입한 후 3.0초가 경과하면, THE Coffee_Bot SHALL WALKING_TO_COOLER 상태로 전이한다
+2. WHEN Coffee_Bot이 IDLE 상태에 진입한 후 4.0초 이상 8.0초 이하의 무작위 대기 시간이 경과하면, THE Coffee_Bot SHALL WALKING_TO_COOLER 상태로 전이한다
 3. WHEN Coffee_Bot이 WALKING_TO_COOLER 상태에서 water cooler 앞의 도착 지점(목표 좌표와의 거리 2픽셀 이하)에 도달하면, THE Coffee_Bot SHALL FILLING 상태로 전이한다
 4. WHEN Coffee_Bot이 FILLING 상태에 진입한 후 1.5초가 경과하면, THE Coffee_Bot SHALL SERVING 상태로 전이한다
-5. WHEN Coffee_Bot이 SERVING 상태에서 boss desk의 도착 지점(목표 좌표와의 거리 2픽셀 이하)에 도달하면, THE Boss SHALL `커피 좋아` Speech_Bubble을 2.0초 동안 표시한다
-6. WHEN Coffee_Bot이 SERVING 상태에서 boss desk에 도착하여 Boss의 `커피 좋아` Speech_Bubble 표시가 시작되면, THE Coffee_Bot SHALL RECHARGING 상태로 전이한다
+5. WHEN Coffee_Bot이 SERVING 상태에서 boss desk의 도착 지점(목표 좌표와의 거리 2픽셀 이하)에 도달하면, THE Boss SHALL `Nice brew ☕` Speech_Bubble을 2.0초 동안 표시한다
+6. WHEN Coffee_Bot이 SERVING 상태에서 boss desk에 도착하여 Boss의 `Nice brew ☕` Speech_Bubble 표시가 시작되면, THE Coffee_Bot SHALL RECHARGING 상태로 전이한다
 7. WHEN Coffee_Bot이 RECHARGING 상태에서 server rack 앞의 도착 지점에 도달한 후 2.0초가 경과하면, THE Coffee_Bot SHALL IDLE 상태로 전이한다
-8. WHEN Agent가 상태에 진입하고 해당 상태에 대사가 정의되어 있으면, THE Renderer SHALL 해당 Agent 머리 위에 Speech_Bubble을 2.0초 동안 표시한 뒤 제거한다
+8. WHEN Agent가 상태에 진입하고 해당 상태에 대사가 정의되어 있으면, THE Renderer SHALL 해당 Agent 머리 위에 Speech_Bubble을 2.0초 동안 표시한 뒤 제거한다. 대사는 영어이며 네 Agent 모두 상태별 대사를 가진다(대사가 배열이면 주입된 rng로 하나를 고른다). 폰트는 `Consolas, monospace`를 쓴다
 9. WHILE Speech_Bubble이 표시되는 동안, THE Renderer SHALL 매 프레임 Speech_Bubble 전체 영역이 320x200 논리 화면의 경계(x 0~319, y 0~199) 안에 완전히 들어오도록 위치를 보정한다
 10. WHEN 한 Agent의 Speech_Bubble이 표시 중인 상태에서 같은 Agent에 대한 새 Speech_Bubble이 요청되면, THE Renderer SHALL 기존 Speech_Bubble을 즉시 제거하고 새 Speech_Bubble을 2.0초 동안 표시한다
 

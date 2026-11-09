@@ -5,7 +5,7 @@ import { SPRITES, decodeSprite, visiblePixels, walkPose } from './sprites.js';
 import { computeScale, copierScanY, ledOn } from './scene-math.js';
 import { clampBubbleRect } from './bubbles.js';
 
-const FONT_STACK = "'Malgun Gothic', monospace";
+const FONT_STACK = 'Consolas, monospace';
 const AGENT_ORDER = ['boss', 'copier', 'coffee', 'newbie'];
 const BUBBLE_TAIL = 3;
 
@@ -48,6 +48,8 @@ export function createRenderer(screenCanvas, opts = {}) {
     }
   }
 
+  // w, h are DEVICE pixels (main.js multiplies the CSS box by devicePixelRatio); the backing
+  // store is 1:1 with device px, so scale, scanline period and glow offsets are device px.
   function resize(w, h) {
     vw = Math.max(1, Math.floor(num(w, LOGICAL_W)));
     vh = Math.max(1, Math.floor(num(h, LOGICAL_H)));
@@ -117,7 +119,8 @@ export function createRenderer(screenCanvas, opts = {}) {
     sctx.globalCompositeOperation = 'lighter';
     sctx.globalAlpha = 0.12;
     if (w > 0 && h > 0) {
-      sctx.drawImage(logical, 0, 0, LOGICAL_W, LOGICAL_H, x - 1, y - 1, w + 2, h + 2);
+      const pad = Math.max(1, Math.round(scale / 2));   // glow spread in device px
+      sctx.drawImage(logical, 0, 0, LOGICAL_W, LOGICAL_H, x - pad, y - pad, w + 2 * pad, h + 2 * pad);
     }
     sctx.globalCompositeOperation = 'source-over';
     // Scanlines: one dark line per logical row, spaced `scale` px apart.
@@ -141,7 +144,7 @@ export function createRenderer(screenCanvas, opts = {}) {
       lctx.globalAlpha = 1;
       lctx.fillStyle = '#000';
       lctx.fillRect(0, 0, LOGICAL_W, LOGICAL_H);
-      lctx.font = '10px monospace';
+      lctx.font = '10px Consolas, monospace';
       lctx.textBaseline = 'top';
       const lines = boot && Array.isArray(boot.lines) ? boot.lines : [];
       const input = boot && typeof boot.input === 'string' ? boot.input : '';
@@ -252,7 +255,8 @@ export function createRenderer(screenCanvas, opts = {}) {
 
   function bubbleWidth(text) {
     let w = 4;
-    for (const ch of text) w += ch.codePointAt(0) > 0x2ff ? 9 : 5;
+    // Consolas 8px glyphs are ~4.5px wide; emoji / astral / symbol code points need ~10px.
+    for (const ch of text) w += ch.codePointAt(0) > 0x2ff ? 10 : 5;
     return Math.max(12, w);
   }
 

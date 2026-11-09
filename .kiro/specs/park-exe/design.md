@@ -146,7 +146,7 @@ sequenceDiagram
   Q->>N: send(REVIEW) → 0.70 APPROVED / 0.30 REJECTED
   N->>Q: APPROVED 진입 알림
   Q->>B: send(RESULT_APPROVED) → STAMP_APPROVE
-  Q->>Q: bubble "승인!", pendingCopyJobs += 1
+  Q->>Q: bubble "APPROVED! 🎉", pendingCopyJobs += 1
   Q->>C: Copier가 IDLE이면 send(COPY_REQUEST)
   N->>Q: RETURNING 진입 알림
   Q->>B: send(NEWBIE_RETURNING) → IDLE
@@ -157,7 +157,7 @@ sequenceDiagram
 1. `dt`를 받는다. 100ms 상한은 `loop.js`가 이미 적용했지만 `sim`도 방어적으로 한 번 더 `min(dt, 0.1)`을 적용한다.
 2. 각 Agent: 목표가 있으면 `moveToward`로 이동. 목표에 처음 도달한 프레임에 `ARRIVED`를 큐에 넣는다.
 3. 각 Agent: `tickAgent(engine, dt)` = `context.dwell += dt` 후 `send('TICK')`.
-4. 협업 점검: Boss가 REVIEWING이고 `dwell >= 1.0`이며 `reviewSent`가 거짓이면 `reviewSent = true`로 하고 Newbie에 `REVIEW`를 큐에 넣는다. `pendingCopyJobs > 0`이고 Copier가 IDLE이면 `COPY_REQUEST`를 큐에 넣는다.
+4. 협업 점검: Boss가 REVIEWING이고 `dwell >= 1.0`이며 `reviewSent`가 거짓이면 `reviewSent = true`로 하고 Newbie에 `REVIEW`를 큐에 넣는다. `pendingCopyJobs > 0`이고 Copier가 IDLE이며 `dwell >= idleFor`이면 `COPY_REQUEST`를 큐에 넣는다.
 5. 큐 비우기: 큐 항목을 하나씩 꺼내 `send()`한다. 이 과정에서 생긴 알림은 `reactions`가 처리하며 새 항목을 큐에 넣을 수 있다. 무한 루프 방지를 위해 프레임당 최대 64회로 제한한다.
 6. 말풍선 시간 경과, 시뮬레이션 시간 누적.
 
@@ -240,7 +240,7 @@ export const AGENT_STATE_TARGETS: Record<AgentId, Record<StateId, AnchorName | n
 
 상태 설정에는 엔진이 모르는 앱 전용 필드를 둘 수 있다. 엔진은 알 수 없는 필드를 무시한다.
 
-- `say: string` : 진입 시 말풍선 대사 (Req 7.5, 7.6, 9.8)
+- `say: string | string[]` (배열이면 sim.js가 주입된 rng로 하나 선택; 폰트 `Consolas, monospace`) : 진입 시 말풍선 대사 (Req 7.5, 7.6, 9.8)
 - `walkTo: AnchorName` : 진입 시 이동 목표 (이 필드가 있는 상태에서만 Agent가 걷는다)
 
 **공통 `onEnter`**: `ctx.dwell = 0`. 상태별 `onEnter`가 추가 초기화를 한다.
@@ -259,10 +259,10 @@ stateDiagram-v2
   RETURNING --> IDLE: ARRIVED
 ```
 
-- 초기 context: `{ dwell: 0, idleFor: 2, hasDoc: false }`. IDLE `onEnter`가 `idleFor = 1 + rng() * 2` (1.0~3.0초)로 설정한다.
+- 초기 context: `{ dwell: 0, idleFor: IDLE_MIN_SEC + rng() * IDLE_SPAN_SEC, hasDoc: false }` (팩토리에서 추출). IDLE `onEnter`가 같은 식으로 `idleFor`(4.0~8.0초, `IDLE_MIN_SEC = 4`, `IDLE_SPAN_SEC = 4`)를 다시 설정한다.
 - `APPROVED`, `REJECTED` 진입 transition의 `action`이 `hasDoc = false`로 설정한다. 문서는 보스에게 제출된 것으로 본다.
 - `SUBMITTING`에서만 `REVIEW` transition이 있으므로 다른 상태에서의 `REVIEW`는 `send()`가 `false`를 돌려주고 상태가 유지된다 (Req 7.15).
-- `say`: APPROVED는 `승인!`, REJECTED는 `반려…`.
+- `say`: APPROVED는 `APPROVED! 🎉`, REJECTED는 `REJECTED?! 😭`. 다른 Agent의 대사는 schemas.js `AGENT_STATE_SAY` 참조.
 - `walkTo`: WALKING_TO_BOSS는 `bossDeskFront`, RETURNING은 `newbieStart`.
 
 #### Boss
@@ -279,14 +279,14 @@ stateDiagram-v2
 
 - 초기 context: `{ dwell: 0, reviewSent: false }`. Boss는 걷지 않는다 (`walkTo` 없음).
 - 1.0초 후 `REVIEW` 전달은 스키마의 `action`이 아니라 `sim.js` 협업 점검(4단계)이 `boss.dwell`을 보고 수행한다. 다른 엔진으로 동기 `send`하는 `action`이 재진입 문제를 만들기 때문이다.
-- `커피 좋아` 말풍선은 Boss 상태가 아니라 `sim.js`의 반응(Coffee_Bot이 SERVING에서 `ARRIVED`로 RECHARGING에 진입)이 Boss 말풍선으로 요청한다. Boss 상태 집합은 Req 7.11 그대로 유지된다.
+- `Nice brew ☕` 말풍선은 Boss 상태가 아니라 `sim.js`의 반응(Coffee_Bot이 SERVING에서 `ARRIVED`로 RECHARGING에 진입)이 Boss 말풍선으로 요청한다. Boss 상태 집합은 Req 7.11 그대로 유지된다.
 
 #### Copier_Runner
 
 ```mermaid
 stateDiagram-v2
   [*] --> IDLE
-  IDLE --> WALKING_TO_COPIER: COPY_REQUEST / pagesTarget = 2 + floor(rng*3)
+  IDLE --> WALKING_TO_COPIER: COPY_REQUEST [dwell >= idleFor] / pagesTarget = 2 + floor(rng*3)
   WALKING_TO_COPIER --> PRINTING: ARRIVED / pagesPrinted = 0
   PRINTING --> PRINTING: TICK [dwell >= 1 and pagesPrinted + 1 < pagesTarget] / pagesPrinted++
   PRINTING --> DELIVERING: TICK [dwell >= 1 and pagesPrinted + 1 >= pagesTarget] / pagesPrinted++
@@ -294,7 +294,7 @@ stateDiagram-v2
   WAITING --> IDLE: TICK [dwell >= 2]
 ```
 
-- 초기 context: `{ dwell: 0, pagesPrinted: 0, pagesTarget: 3 }`.
+- 초기 context: `{ dwell: 0, idleFor: 4~8 (rng), pagesPrinted: 0, pagesTarget: 3 }`. IDLE `onEnter`가 `idleFor`를 4.0~8.0초로 다시 뽑고, `dwell < idleFor`인 `COPY_REQUEST`는 guard가 거부한다 (sim은 `dwell >= idleFor`일 때만 작업을 소비하므로 작업이 유실되거나 중복 소비되지 않는다).
 - 두 PRINTING transition의 guard는 서로 배타적이다. 그래서 엔진이 확률 선택 경로로 가지 않는다.
 - `walkTo`: WALKING_TO_COPIER는 `copierFront`, DELIVERING은 `bossDeskFront`. PRINTING 중 copier의 스캔 광원은 렌더러가 `copier.state === 'PRINTING'`일 때 밝게 그린다 (Req 5.3, 5.4).
 - self transition은 `dwell`을 0으로 되돌리므로 페이지 간격에는 프레임 하나 이하의 오차가 있다. 허용한다.
@@ -304,7 +304,7 @@ stateDiagram-v2
 ```mermaid
 stateDiagram-v2
   [*] --> IDLE
-  IDLE --> WALKING_TO_COOLER: TICK [dwell >= 3.0]
+  IDLE --> WALKING_TO_COOLER: TICK [dwell >= idleFor]
   WALKING_TO_COOLER --> FILLING: ARRIVED
   FILLING --> SERVING: TICK [dwell >= 1.5]
   SERVING --> RECHARGING: ARRIVED / atRack = false
@@ -312,7 +312,7 @@ stateDiagram-v2
   RECHARGING --> IDLE: TICK [atRack and dwell >= 2.0]
 ```
 
-- 초기 context: `{ dwell: 0, atRack: false }`. RECHARGING의 `walkTo`는 `rackFront`이고, 서버 랙 앞에 도착하면 `ARRIVED`가 한 번 더 발생해 `atRack`이 참이 된다.
+- 초기 context: `{ dwell: 0, idleFor: 4~8 (rng), atRack: false }`. IDLE `onEnter`가 `idleFor`를 4.0~8.0초로 다시 뽑는다. RECHARGING의 `walkTo`는 `rackFront`이고, 서버 랙 앞에 도착하면 `ARRIVED`가 한 번 더 발생해 `atRack`이 참이 된다.
 - FILLING 동안 렌더러가 water cooler 기포를 그린다. FILLING을 벗어나면 다음 프레임부터 그리지 않는다 (Req 5.6, 5.7).
 - `say`: SERVING은 `커피 배달!` 같은 짧은 대사를 둘 수 있다. 필수는 아니다.
 
@@ -358,7 +358,7 @@ interface Simulation {
 | newbie → APPROVED | boss에 `RESULT_APPROVED` 큐잉, `pendingCopyJobs += 1` |
 | newbie → REJECTED | boss에 `RESULT_REJECTED` 큐잉 |
 | newbie → RETURNING | boss에 `NEWBIE_RETURNING` 큐잉 |
-| coffee → RECHARGING (prev SERVING) | boss 말풍선 `커피 좋아` (2.0초) |
+| coffee → RECHARGING (prev SERVING) | boss 말풍선 `Nice brew ☕` (2.0초) |
 
 Copier에는 한 번에 `COPY_REQUEST` 하나만 전달되고, Copier가 바쁘면 `pendingCopyJobs`에 남아 IDLE이 될 때까지 기다린다. 승인 1회당 요청 1회가 정확히 한 번 소비된다 (Req 7.7).
 
@@ -454,7 +454,7 @@ export function moveToward(pos, target, speed, dtSec): { x, y, arrived: boolean 
 
 ### render.js (Canvas 2D)
 
-- 논리 캔버스 320x200(오프스크린)에 Boot 또는 Office를 그리고, 화면 캔버스에는 `imageSmoothingEnabled = false`로 `computeScale` 정수 배율 확대 후 중앙 배치한다. 뷰포트가 320x200보다 작으면 1배율로 그리고 넘치는 부분은 잘린다 (Req 3.4, 3.5, 3.7).
+- 논리 캔버스 320x200(오프스크린)에 Boot 또는 Office를 그리고, 화면 캔버스에는 `imageSmoothingEnabled = false`로 `computeScale` 정수 배율 확대 후 중앙 배치한다. `resize(w, h)`의 인자는 CSS px이 아니라 **디바이스 픽셀**이며, 캔버스 백킹 스토어는 디바이스 픽셀과 1:1이다. 베젤 화면 영역(`#park-screen`)이 320x200보다 작으면 1배율로 그리고 넘치는 부분은 잘린다 (Req 3.4, 3.5, 3.7).
 - CRT 후처리는 확대된 화면 해상도에서 매 프레임 적용한다. 스캔라인은 배율 픽셀 단위 줄무늬, 비네트는 크기 변경 시 한 번 만든 방사형 그라디언트를 재사용, 인광 글로우는 `globalCompositeOperation = 'lighter'`로 밝은 영역을 약하게 한 번 더 그린다 (Req 3.3).
 - PARKING 동안 논리 캔버스를 `shakeOffset`과 `rollOffset`으로 그린다. CRT_ON 동안 세로 스케일 `crtOnProgress`로 켜짐 효과를 그린다.
 - Sprite는 `decodeSprite` 결과를 `fillRect` 1x1 단위로 그린다. 정수 좌표로 반올림하고, 반전은 열 순서를 뒤집어 그린다. 이미지 에셋 없음 (Req 4.3, 5.8).
@@ -462,11 +462,16 @@ export function moveToward(pos, target, speed, dtSec): { x, y, arrived: boolean 
 
 ### main.js
 
+- 크기 계산(onResize): #park-screen.getBoundingClientRect() x devicePixelRatio로 디바이스 픽셀 크기를 구하고, computeScale로 최대 정수 배율 k를 정한 뒤 캔버스 백킹 스토어를 정확히 320k x 200k 디바이스 픽셀로 맞춘다. CSS 크기는 그 값 / dpr이며 디바이스 픽셀 경계에 맞춰 화면 영역 중앙에 둔다(레터박스는 베젤 안쪽의 검은 영역). esize 이벤트, ResizeObserver, matchMedia('(resolution: Ndppx)') 변경 시 다시 계산한다 (Req 3.4, 3.7).
 - `park.html`의 loader가 로드한다. 단계 엔진 `new FsmEngine(createAppSchema(...))`을 만들고 `onStateChange`로 단계별 동작을 연결한다 (표는 Architecture 참고).
 - 입력: `keydown`은 BOOT에서 Boot 모델로, OFFICE에서 `EXIT`로 보낸다. `pointerdown`은 BOOT에서 `boot.pointer()`, OFFICE에서 `EXIT`. PARKING/CRT_ON에서는 무시한다 (`send`가 `false`).
 - 오디오 unlock: `pointerdown`, `keydown`, `touchstart`를 capture로 듣고 `audio.unlock()` 호출 (`index.html`의 `unlockAudio`와 같은 방식). 음소거 토글은 `M` 키.
 - 가시성: `visibilitychange`에서 `hidden`이면 `loop.pause()`, `visible`이면 `loop.resume()`.
 - 정리: OFFICE → BOOT 진입 시 `sim.destroy()`, Office 루프 `stop()`, Boot 루프 시작.
+
+### park.html 베젤
+
+- 이미지·외부 폰트 없이 HTML/CSS만으로 4:3(spect-ratio: 4 / 3, 폭 min(94vw, 88vh*4/3)) CRT 모니터를 중앙에 그린다: 베이지 플라스틱 본체(order-radius), 안쪽 움푹한 어두운 프레임, 유리 반사 오버레이(pointer-events: none), 하단 턱(브랜드 PARK-TRON 8088, 전원 LED), 스탠드. canvas#park-canvas는 검은 #park-screen 안에 있으며 image-rendering: pixelated. 폰트는 Consolas, monospace. 베젤을 클릭해도 window 수준 입력 리스너가 동작한다.
 
 ### park.html 로드 실패 처리
 
@@ -589,8 +594,8 @@ Agent의 FSM 상태는 `engine.getCurrentState()`로만 읽는다. `moving`과 `
 |---|---|
 | Newbie | `{ dwell: 0, idleFor: 2, hasDoc: false }` |
 | Boss | `{ dwell: 0, reviewSent: false }` |
-| Copier | `{ dwell: 0, pagesPrinted: 0, pagesTarget: 3 }` |
-| Coffee | `{ dwell: 0, atRack: false }` |
+| Copier | `{ dwell: 0, idleFor: 4~8, pagesPrinted: 0, pagesTarget: 3 }` |
+| Coffee | `{ dwell: 0, idleFor: 4~8, atRack: false }` |
 
 ### Bubble
 
@@ -768,7 +773,7 @@ prework에서 testable로 분류된 항목을 다음과 같이 합쳤다.
 
 ### Property 19: 시간 임계값은 프레임 분할과 무관하게 지켜진다
 
-*For any* 시드와 *any* 프레임 시간 분할(합이 같은 임의의 `dt` 목록, 각 100ms 이하)에서, Newbie의 IDLE→WALKING_TO_BOSS 전이는 `dwell`이 `idleFor`(1.0 이상 3.0 이하)에 이른 첫 프레임에서 일어나고, APPROVED/REJECTED→RETURNING은 `dwell >= 1.5`에서, Coffee_Bot의 IDLE→WALKING_TO_COOLER는 `dwell >= 3.0`, FILLING→SERVING은 `dwell >= 1.5`, RECHARGING→IDLE은 도착 후 `dwell >= 2.0`에서, Copier_Runner의 WAITING→IDLE은 `dwell >= 2.0`에서만, 그리고 그 첫 프레임에서 일어난다. 전이는 임계값 이전에는 일어나지 않는다.
+*For any* 시드와 *any* 프레임 시간 분할(합이 같은 임의의 `dt` 목록, 각 100ms 이하)에서, Newbie의 IDLE→WALKING_TO_BOSS 전이는 `dwell`이 `idleFor`(4.0 이상 8.0 이하)에 이른 첫 프레임에서 일어나고, APPROVED/REJECTED→RETURNING은 `dwell >= 1.5`에서, Coffee_Bot의 IDLE→WALKING_TO_COOLER는 `dwell >= idleFor`(4.0~8.0), Copier_Runner의 IDLE에서 `COPY_REQUEST` 수락은 `dwell >= idleFor`, FILLING→SERVING은 `dwell >= 1.5`, RECHARGING→IDLE은 도착 후 `dwell >= 2.0`에서, Copier_Runner의 WAITING→IDLE은 `dwell >= 2.0`에서만, 그리고 그 첫 프레임에서 일어난다. 전이는 임계값 이전에는 일어나지 않는다.
 
 **Validates: Requirements 7.2, 7.8, 8.8, 9.2, 9.4, 9.7**
 
